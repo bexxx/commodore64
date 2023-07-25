@@ -1,0 +1,8 @@
+Author: Ralf "bexxx" Beckers
+System: Commodore 64
+Language used: 6502 assembly, compiled with Kick assembler
+Length of source code: 1064 bytes
+Length of executable file: 85 bytes
+Length of executed code: 70 bytes
+
+Drag and drop prg file into vice or c64 debugger

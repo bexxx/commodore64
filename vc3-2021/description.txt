@@ -1,0 +1,22 @@
+The code calculates the start offset of the asteriks of the screen buffer and
+write the number of asteriks for this line directly to it. 
+
+Storing the chars will be done to a base address pointing the leftmost offset of the
+current line into the screen buffer. Indexed addressing with the y register is used
+to calculate the start offset of the asteriks for this line. The x register is
+initialized with the length of the asteriks sequence.
+
+Once a line is done, the code modifies itself and adds 40 (line length) to the command
+that writes the asteriks into buffer.
+
+Optimizations used:
+The code uses a byte array which is the half of the length of asteriks in that line - 1. 
+The length to write is then 2* (shift left) this value + 1 for the middle asteriks, the offset to
+start is leftmost start (line start + half of line - half of max tree width).
+
+Possible other optimizations:
+- Run this in the zero page to have shorter opcodes?
+- Think about sequence of commands and find better usage of registers to get rid of the stack
+  and the transfer commands.
+- need to load the length 2x. Need to learn how to add negative values, then instead of doing
+  11-length I could do adc -11 and keep the length in accumulator.
