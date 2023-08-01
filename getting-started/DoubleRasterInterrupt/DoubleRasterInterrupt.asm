@@ -35,7 +35,9 @@ main:
     cli                                         // allow interrupts to happen again
     rts
 
-.align $400
+.align $100                                     // align on the start of a new page
+.segment Default "raster interrupt"             // shows the bytes for this code, when using -showmem
+                                                // helpful to check whether it all fits into the same page
 interruptHandler:
     // when this code is started, 38-45 cycles already passed
     // in the current raster line (completing asm instruction, saving return address and rgisters)
@@ -109,11 +111,13 @@ secondRasterInterrupt: {
                                                 // total:
                                                 // 25 cycles, here we are either on cycles 63 or 64
 
-    beq rasterInterruptStart                    // (3 cycles) still on raster + 2, waste one cycle for branch taken on beq
+    beq finalRasterInterruptStart               // (3 cycles) still on raster + 2, waste one cycle for branch taken on beq
                                                 // (2 cycles) just continue running, we are on raster + 3
+                                                // make sure this command and target are in the same page, otherwise
+                                                // this beq takes an extra cycle and messes up the precise timing.
 }
 
-rasterInterruptStart:
+finalRasterInterruptStart:
     // Here we always start exactly 3 cycles on raster line + 3
     sta VIC.BORDER_COLOR                        // set border color
 
