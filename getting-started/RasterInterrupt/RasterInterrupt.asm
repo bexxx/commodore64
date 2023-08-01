@@ -16,10 +16,10 @@ main:
     and #VIC.RASTERLINE_BIT9_CLEAR_MASK     // clear or set depending on desired raster line, here clear
     sta VIC.SCREEN_CONTROL_REG              // write back to VIC control register
 
-    lda #<interruptHandlerStart             // low byte of our raster interrupt handler
-    sta $0314                               // store to RAM interrupt handler
-    lda #>interruptHandlerStart             // high byte of our raster interrupt handler
-    sta $0315                               // store to RAM interrupt handler
+    lda #<interruptHandlerStart                 // low byte of our raster interrupt handler
+    sta Internals.InterruptHandlerPointerRamLo  // store to RAM interrupt handler
+    lda #>interruptHandlerStart                 // high byte of our raster interrupt handler
+    sta Internals.InterruptHandlerPointerRamHi  // store to RAM interrupt handler
 
     lda VIC.INTERRUPT_ENABLE                // load current value of VIC interrupt control register
     ora #VIC.ENABLE_RASTER_INTERRUPT_MASK   // set bit 0 - enable raster line interrupt
