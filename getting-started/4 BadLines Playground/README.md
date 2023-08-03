@@ -15,4 +15,5 @@ Used sources:
 - [C64 wiki, Zeropage](https://www.c64-wiki.de/wiki/Zeropage)
 - [C64 wiki, VIC](https://www.c64-wiki.de/wiki/VIC)
 - [C64 wiki, CIA](https://www.c64-wiki.de/wiki/CIA)
+- [THE VIC ii bible](http://www.zimmers.net/cbmpics/cbm/c64/vic-ii.txt)
 - [KickAssembler manual](http://theweb.dk/KickAssembler/KickAssembler.pdf)
