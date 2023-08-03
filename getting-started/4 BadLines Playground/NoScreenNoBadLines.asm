@@ -1,9 +1,9 @@
-#import "../includes/vic_constants.asm"
-#import "../includes/cia1_constants.asm"
-#import "../includes/internals.asm"
-#import "../includes/zeropage.asm"
+#import "../../includes/vic_constants.inc"
+#import "../../includes/cia1_constants.inc"
+#import "../../includes/internals.inc"
+#import "../../includes/zeropage.inc"
 
-.const RasterInterruptLine = $20
+.const RasterInterruptLine = $03
 
 BasicUpstart2(main)
 
@@ -23,6 +23,9 @@ main:
     
     lda VIC.SCREEN_CONTROL_REG                  // clear high bit of raster interrupt
     and #VIC.RASTERLINE_BIT9_CLEAR_MASK         // clear or set depending on desired raster line, here clear
+  // TEST COMMENT OUT TO SEE BAD LINE EFFECTS  
+    and #VIC.ENABLE_SCREEN_CLEAR_MASK
+  // TEST COMMENT OUT TO SEE BAD LINE EFFECTS  
     sta VIC.SCREEN_CONTROL_REG                  // write back to VIC control register
     
     lda #CIA1.CLEAR_ALL_INTERRUPT_SOURCES
@@ -45,9 +48,9 @@ interruptHandler:
     // The remaining cycles in this raster line are not sufficient to set this up, so we select
     // the current rasterline + 2.
     lda #<secondRasterInterrupt                 // (2 cycles) 2. Raster-IRQ einrichten
-    sta Internals.InterruptHandlerPointerRamLo                                   // (4 cycles)
+    sta Internals.InterruptHandlerPointerRamLo  // (4 cycles)
     lda #>secondRasterInterrupt                 // (2 cycles)
-    sta Internals.InterruptHandlerPointerRamHi                                   // (4 cycles)
+    sta Internals.InterruptHandlerPointerRamHi  // (4 cycles)
     tsx                                         // (2 cycles) Stackpointer im X-Reg. retten
     stx secondRasterInterrupt.stackpointerValue // (4 cycles) und fürs zurückholen sichern!
     nop                                         // (2 cycles)
@@ -105,7 +108,7 @@ secondRasterInterrupt: {
     nop                                         // (2 cycles)
     bit $01                                     // (3 cycles) modifies flags, but we need an odd cycle count
     ldx VIC.CURRENT_RASTERLINE_REG              // (4 cycles) granted that we are still on raster + 2
-    lda #VIC.white                              // (2 cycles) already load color, do something useful
+    lda #VIC.black                              // (2 cycles) already load color, do something useful
 
     cpx VIC.CURRENT_RASTERLINE_REG              // (4 cycles) still on raster line start + 2?
                                                 // total:
@@ -118,21 +121,33 @@ secondRasterInterrupt: {
 }
 
 finalRasterInterruptStart:
-    // Here we always start exactly 3 cycles on raster line + 3
-    sta VIC.BORDER_COLOR                        // set border color
-
-    ldx #$0a                                    // 2 cycles
+ // Soviel Zeit in der aktuellen Zeile verschwenden,
+ // dass die nächste durchgängig eine Farbe erhält
+                                                // 3 cycles
+    ldx #$09                                    // 2 cycles
+!: dex
+    bne !-                                      // X*5 cycles-1 cycles= 44 cycles
+    ldy #$00                                    //             2 cycles
+    nop                                         //             2 cycles
+    nop                                         //             2 cycles
+    nop                                         //             2 cycles
+    nop                                         //             2 cycles
+                                                // ===============
+                                                //            59 cycles    
 !:
-    dex                                         // 10 * 2 cycles = 20 cycles
-    bne !-                                      //  9 * 3 cycles = 27 cycles
-                                                //  1 * 2 cycles =  2 cycles
-    nop                                         //                  2 cycles
-    nop                                         //                  2 cycles
-    nop                                         //                  2 cycles
-    lda #VIC.lblue                              //                  2 cycles 
-    sta VIC.BORDER_COLOR                        //                  4 cycles
-                                                // total
-                                                //                 63 cycles
+    sta $d020                                   //            4 cycles
+    ldx #$09                                    //            2 cycles
+!:  dex                                        
+    bne !-                                      // X*5 cycles-1 cycles= 44 cycles
+    nop                                         //             2 cycles
+    nop                                         //             2 cycles
+    nop                                         //             2 cycles
+    eor #%00001010                              //             2 cycles
+    dey                                         //             2 cycles
+    bne !--                                     //             3 cycles
+                                                // ===============
+                                                //            63 cycles
+ sta $d020                                      //set border color
 
     lda #<interruptHandler                      // restore first interrupt handler address
     sta Internals.InterruptHandlerPointerRamLo
