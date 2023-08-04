@@ -7,11 +7,6 @@
     .label InterruptHandlerPointerRomHi = $ffff
 }
 
-.macro ReturnFromInterrupt() {
-    pla
-    tay
-    pla
-    tax
-    pla
-    rti
+.namespace Kernal {
+    .label ClearScreen = $e544
 }
