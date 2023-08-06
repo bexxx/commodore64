@@ -1,6 +1,7 @@
 #import "../../includes/vic_constants.inc"
 #import "../../includes/cia1_constants.inc"
 #import "../../includes/internals.inc"
+#import "../../includes/common.inc"
 
 .const RasterInterruptLine = 102
 .const RasterInterruptLineEnd = 140

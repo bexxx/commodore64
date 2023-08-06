@@ -9,4 +9,6 @@
                                 // Bit 6 - Undefined
                                 // Bit 7 - Undefined
     .label ENABLE_ROM_MASK = %10
+
+    .label Unused_02 = $02
 }
