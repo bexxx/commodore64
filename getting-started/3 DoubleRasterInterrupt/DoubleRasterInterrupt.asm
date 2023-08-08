@@ -53,7 +53,7 @@ interruptHandler:
     nop                                         // (2 cycles)
     nop                                         // (2 cycles)
     nop                                         // (2 cycles)
-    lda #VIC.ENABLE_RASTER_INTERRUPT_MASK       // (2 cycles) ack rster interrupt / enable second
+    lda #VIC.ENABLE_RASTER_INTERRUPT_MASK       // (2 cycles) ack first interrupt / enable second
                                                 // total
                                                 // 26 cycles
                                                 // start was 38 + 26 cycles passed, we're now in the next raster line

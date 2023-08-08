@@ -3,7 +3,7 @@
 #import "../../includes/internals.inc"
 #import "../../includes/zeropage.inc"
 
-.const RasterInterruptLine = $00
+.const RasterInterruptLine = $2f
 
 BasicUpstart2(main)
 
@@ -105,7 +105,7 @@ secondRasterInterrupt: {
     bit $01                                     // (3 cycles) modifies flags, but we need an odd cycle count
     ldx VIC.CURRENT_RASTERLINE_REG              // (4 cycles) granted that we are still on raster + 2
     lda #VIC.lred                               // (2 cycles) already load color, do something useful
-    ldy #VIC.black                              //(2 TZ) 'Zeilenfarbe' schwarz ins Y-Reg. laden
+    ldy #VIC.black                              // (2 cycles) load black
     cpx VIC.CURRENT_RASTERLINE_REG              // (4 cycles) still on raster line start + 2?
                                                 // total:
                                                 // 25 cycles, here we are either on cycles 63 or 64
@@ -127,24 +127,24 @@ finalRasterInterruptStart:
     ldy #$2f                                    // 59: 2     
                                                 // 59 cycles
 
-// all lines before top border ends have 63 cycles for cpu
-loopTopBorder:
-    sta $d020                                   // 63: 4
-    ldx #9                                      // 2: 2
- !: dex
-    bne !-                                      // 46: 9*5cycles-1cycle = 44cycles
-    eor #%00001010                              // 48: 2                  
-    dey                                         // 50: 2
-    beq lastTopBorderLineEnd                    // 53: 2 no jump, all top lines, 53: 3 jump, end of top
-    nop                                         // 2: 54
-    nop                                         // 2: 56
-    jmp loopTopBorder                           // 3: 59
-
-lastTopBorderLineEnd:
-                                                // 53
-    nop                                         // 2: 55
-    nop                                         // 2: 57
-    nop                                         // 2: 59
+//// all lines before top border ends have 63 cycles for cpu
+//loopTopBorder:
+//    sta $d020                                   // 63: 4
+//    ldx #9                                      // 2: 2
+// !: dex
+//    bne !-                                      // 46: 9*5cycles-1cycle = 44cycles
+//    eor #%00001010                              // 48: 2                  
+//    dey                                         // 50: 2
+//    beq lastTopBorderLineEnd                    // 53: 2 no jump, all top lines, 53: 3 jump, end of top
+//    nop                                         // 2: 54
+//    nop                                         // 2: 56
+//    jmp loopTopBorder                           // 3: 59
+//
+//lastTopBorderLineEnd:
+//                                                // 53
+//    nop                                         // 2: 55
+//    nop                                         // 2: 57
+//    nop                                         // 2: 59
 
 // there is always one badline followed by 7 lines with full 63 cycles
 // so we only count 25 of those "char lines" before we need to handle the

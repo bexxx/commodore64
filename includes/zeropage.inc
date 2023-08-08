@@ -11,4 +11,9 @@
     .label ENABLE_ROM_MASK = %10
 
     .label Unused_02 = $02
+    .label Unused_FB = $FB
+    .label Unused_FC = $FC
+    .label Unused_FD = $FD
+    .label Unused_FE = $FE
+
 }
