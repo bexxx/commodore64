@@ -9,10 +9,25 @@
 .const TextBufferOffset = ($0400 + 3*40)        // scroll 3rd text line
 .const ControlCommandBoundary = $f7             // value before speed bytes. speed byte
                                                 // this value will be used to add or sub from xscroll
+.const ColorRamOffsetScroller = ($d800 + 3*40)
 
 BasicUpstart2(main)
 
 main:
+    jsr Kernal.ClearScreen
+
+    ldx #39
+!:  lda borderTop,x
+    sta ($0400 + 2*40),x        
+    lda borderBottom,x
+    sta ($0400 + 4*40),x 
+    dex
+    bpl !-
+
+    lda #$00
+    sta $d020
+    sta $d021
+
     sei
 
     lda #<interruptHandler                      // low byte of our raster interrupt handler
@@ -37,7 +52,6 @@ main:
     lda #VIC.ENABLE_RASTER_INTERRUPT_MASK       // load current value of VIC interrupt control register
     sta VIC.INTERRUPT_EVENT                     // store back to enable raster interrupt
     
-    //jsr Kernal.ClearScreen
 
     lda #<scrollText
     sta scrollTextLo
@@ -49,23 +63,24 @@ main:
     sta VIC.CONTR_REG
 
     cli                                         // allow interrupts to happen again
-    rts
-  //!:                                          // remove line before and uncomment to not go back to basic
-  //  jmp !-
+    //rts
+  !:                                          // remove line before and uncomment to not go back to basic
+    jmp !-
 
 .align $100                                     // align on the start of a new page
 .segment Default "raster interrupt"             // shows the bytes for this code, when using -showmem
                                                 // helpful to check whether it all fits into the same page
 interruptHandler:
-    dec $d020                                   // comment out, leave in to check timing
+    //dec $d020                                   // comment out, leave in to check timing
     lda VIC.CONTR_REG                           
     and #%11111000                              
-    ora currentXScrollOffset                    
-    nop                                         // wait until we hit border before changing xscroll
-    nop                                         // this avoids tearing apart the line
-    nop
-    nop                              
-    sta VIC.CONTR_REG                          
+    ora currentXScrollOffset                       
+    tax                                         // wait until we hit border before changing xscroll
+    lda $d018
+    and #VIC.SELECT_CHARSET_CLEAR_MASK
+    ora #VIC.SELECT_CHARSET_AT_2000_MASK
+    stx VIC.CONTR_REG       
+    sta $d018                       
                                                
     lda VIC.CONTR_REG                           // already calculate the 0 xscroll value for the next
     and #11111000                               // character line after the scrolling line
@@ -79,7 +94,14 @@ waitToCharacterLineEnd:
 !:  dex                                         // the line to again avoiding that the next line will
     bne !-                                      // be scrolled too
     nop
-    sta VIC.CONTR_REG
+
+nop
+nop
+    sta VIC.CONTR_REG    
+    lda $d018
+    and #VIC.SELECT_CHARSET_CLEAR_MASK
+    ora #VIC.SELECT_CHARSET_AT_1000_MASK
+    sta $d018        
 
 scrollForward:                                  // not that we are passed the scrolled line with the raster
     lda currentXScrollOffset                    // we determine the next xscroll value and move the characters
@@ -131,13 +153,51 @@ insertCharacterForward:
     inc scrollTextHi
 
 noCharacterInsertForward:
+    ldx #$00
+!:  lda ColorRamOffsetScroller+1,x
+    sta ColorRamOffsetScroller,x
+    inx
+    cpx #39
+    bne !-
+    
+    ldx currentColorCycleOffset
+!:
+    lda colorCycle,x
+    bpl !+
+    ldx #$0
+    stx currentColorCycleOffset
+    jmp !-
+!:
+    sta ColorRamOffsetScroller+39
+    inc currentColorCycleOffset
+
+//    .break
+    ldx currentColorFlashOffset
+ !: lda colorFlash,x
+    bpl !+
+    ldx #$00
+    stx currentColorFlashOffset
+    jmp !-
+
+!:    ldx #39
+!:  sta ($d800+2*40),x
+    sta ($d800+4*40),x
+    dex
+    bpl !-
+    inc currentColorFlashOffset
+
+exit:
     lda #VIC.ENABLE_RASTER_INTERRUPT_MASK       // ack interrupt to enable next one       
     sta VIC.INTERRUPT_EVENT
-    inc $d020                                   // comment out to disable timing
+    //inc $d020                                   // comment out to disable timing
     jmp $ea31
 
 currentXScrollOffset:
     .byte $07
+currentColorCycleOffset:
+    .byte $00
+currentColorFlashOffset:
+    .byte $00
 
 .segment Default "scrolltext"
 scrollText:
@@ -159,3 +219,40 @@ scrollText:
 .byte $f8
 .text "restart text now!..."
 .byte $00 
+
+borderTop:
+	.byte $20, $64, $64, $6F, $6F, $79, $62, $62, $62, $20, $0E, $16, $12, $20, $32, $20, $0F, $0C, $04, $20, $14, $0F, $20, $03, $0F, $04, $05, $2E, $2E, $2E, $20, $62, $62, $62, $79, $6F, $6F, $64, $64, $20
+borderBottom:	
+    .byte $20, $63, $63, $77, $77, $78, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $E2, $78, $77, $77, $63, $63, $20
+
+.align $100
+.segment Default "color cycle"
+colorCycle:
+.byte VIC.brown, VIC.brown, VIC.orange, VIC.orange,VIC.lred, VIC.lred,VIC.yellow, VIC.yellow,VIC.white
+.byte VIC.yellow, VIC.yellow,VIC.lred, VIC.lred,VIC.orange, VIC.orange,VIC.brown, VIC.brown
+.byte $f0 
+
+colorFlash:
+.byte VIC.dgrey,VIC.dgrey,VIC.dgrey,VIC.dgrey,VIC.dgrey 
+.byte VIC.dgrey,VIC.dgrey,VIC.dgrey,VIC.dgrey,VIC.dgrey 
+.byte VIC.dgrey,VIC.dgrey,VIC.dgrey,VIC.dgrey,VIC.dgrey 
+.byte VIC.grey, VIC.grey, VIC.grey, VIC.grey, VIC.grey
+.byte VIC.grey, VIC.grey, VIC.grey, VIC.grey, VIC.grey
+.byte VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey
+.byte VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey
+.byte VIC.yellow, VIC.white, VIC.white, VIC.white, VIC.white 
+.byte VIC.yellow, VIC.white, VIC.white, VIC.white, VIC.white 
+.byte VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey
+.byte VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey
+.byte VIC.grey, VIC.grey, VIC.grey, VIC.grey, VIC.grey
+.byte VIC.grey, VIC.grey, VIC.grey, VIC.grey, VIC.grey
+.byte VIC.grey, VIC.grey, VIC.grey, VIC.grey, VIC.grey
+
+
+
+
+.byte $f0
+
+.align $2000
+.segment Default "charset"
+.import c64 "roger.64c"
