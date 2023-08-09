@@ -37,16 +37,30 @@
 
     // sprite enable
     .label SPRITE_ENABLE = $d015
+    .label SPRITE_0_ENABLE_MASK = %00000001
+    .label SPRITE_1_ENABLE_MASK = %00000010
+    .label SPRITE_2_ENABLE_MASK = %00000100
+    .label SPRITE_3_ENABLE_MASK = %00001000
+    .label SPRITE_4_ENABLE_MASK = %00010000
+    .label SPRITE_5_ENABLE_MASK = %00100000
+    .label SPRITE_6_ENABLE_MASK = %01000000
+    .label SPRITE_7_ENABLE_MASK = %10000000
 
     // address holding pointer info to graphics area
     .label GRAPHICS_POINTER = $d018
 
     // sprite pointers - relative to GRAPHICS_POINTER
     // sprite data address / 64
-    .label SPRITE_POINTER_4 = $07fc
-    .label SPRITE_POINTER_5 = $07fd
-    .label SPRITE_POINTER_6 = $07fe
-    .label SPRITE_POINTER_7 = $07ff
+
+
+    .label SPRITE_POINTER_0_OFFSET = $03f8
+    .label SPRITE_POINTER_1_OFFSET = $03f9
+    .label SPRITE_POINTER_2_OFFSET = $03fa
+    .label SPRITE_POINTER_3_OFFSET = $07fb
+    .label SPRITE_POINTER_4_OFFSET = $037fc
+    .label SPRITE_POINTER_5_OFFSET = $03fd
+    .label SPRITE_POINTER_6_OFFSET = $03fe
+    .label SPRITE_POINTER_7_OFFSET = $03ff
 
     // sprite screen locations
     .label SPRITE_0_X = $d000
@@ -157,3 +171,4 @@
     ora #VIC.SELECT_SCREENBUFFER_AT_2000_MASK
     sta VIC.GRAPHICS_POINTER
 }
+
