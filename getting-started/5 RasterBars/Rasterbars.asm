@@ -35,7 +35,7 @@ main:
 
     cli                                         // allow interrupts to happen again
     
-    jsr Kernal.ClearScreen
+    jsr Kernel.ClearScreen
   !:
     jmp !-
 

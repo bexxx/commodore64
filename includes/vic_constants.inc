@@ -1,3 +1,5 @@
+#importonce 
+
 .namespace VIC
 {
     .label BASE  = $d000

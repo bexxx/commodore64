@@ -14,7 +14,7 @@
 BasicUpstart2(main)
 
 main:
-    jsr Kernal.ClearScreen
+    jsr Kernel.ClearScreen
 
     ldx #39
 !:  lda borderTop,x

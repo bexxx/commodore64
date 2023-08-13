@@ -7,6 +7,6 @@
     .label InterruptHandlerPointerRomHi = $ffff
 }
 
-.namespace Kernal {
+.namespace Kernel {
     .label ClearScreen = $e544
 }
