@@ -10,6 +10,10 @@ Just to see that it works and just the screen memory on top is spread differentl
 1. Wait 3 text lines raster lines and display them
 1. Delay bad lines for 16 raster lines
 
+## FLD BusyWaitingMoving.asm
+
+Same as the first one, but this time we use FLD on top and bottom of fixed content to make it bounce.
+
 
 
 
