@@ -76,11 +76,11 @@ interruptHandler:
     and #%11111000                              
     ora currentXScrollOffset                       
     tax                                         // wait until we hit border before changing xscroll
-    lda $d018
+    lda VIC.GRAPHICS_POINTER
     and #VIC.SELECT_CHARSET_CLEAR_MASK
     ora #VIC.SELECT_CHARSET_AT_2000_MASK
     stx VIC.CONTR_REG       
-    sta $d018                       
+    sta VIC.GRAPHICS_POINTER                       
                                                
     lda VIC.CONTR_REG                           // already calculate the 0 xscroll value for the next
     and #11111000                               // character line after the scrolling line
@@ -94,14 +94,13 @@ waitToCharacterLineEnd:
 !:  dex                                         // the line to again avoiding that the next line will
     bne !-                                      // be scrolled too
     nop
-
-nop
-nop
+    nop
+    nop
     sta VIC.CONTR_REG    
-    lda $d018
+    lda VIC.GRAPHICS_POINTER
     and #VIC.SELECT_CHARSET_CLEAR_MASK
     ora #VIC.SELECT_CHARSET_AT_1000_MASK
-    sta $d018        
+    sta VIC.GRAPHICS_POINTER        
 
 scrollForward:                                  // not that we are passed the scrolled line with the raster
     lda currentXScrollOffset                    // we determine the next xscroll value and move the characters
@@ -179,7 +178,7 @@ noCharacterInsertForward:
     stx currentColorFlashOffset
     jmp !-
 
-!:    ldx #39
+!:  ldx #39
 !:  sta ($d800+2*40),x
     sta ($d800+4*40),x
     dex
