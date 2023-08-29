@@ -14,7 +14,7 @@ main:
 
     lda #0
     sta CurrentSineTableIndex
-    jsr Kernal.ClearScreen
+    jsr Kernel.ClearScreen
 
     lda #<interruptHandler                      // low byte of our raster interrupt handler
     sta Internals.InterruptHandlerPointerRamLo  // store to RAM interrupt handler
