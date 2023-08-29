@@ -16,7 +16,6 @@ BasicUpstart2(main)
 main:
     // clear screen with spaces (20)
     jsr Kernel.ClearScreen
-
     // for the lines with the "logo" we need a character which is empty, this is "0" in our case
     ldx #39
     lda #0
@@ -29,7 +28,6 @@ main:
     sta $0400+240,x
     sta $0400+280,x
     sta $0400+320,x
-//    sta $0400+360,x
     dex
     bpl !-
 
@@ -122,7 +120,6 @@ emptyCharInner:
     jmp emptyCharOuter
 emptyCharDone:
 
-
     // now we shift by one character (for every line of the logo) and insert a new empty one
 
     // copy first
@@ -160,9 +157,9 @@ updateTargetAddress:
 
 !emptyCharDone:
 
-    lda $01    // switch in I/O mapped registers again...
+    lda $01                                     // switch in I/O mapped registers again...
     ora #%00000100
-    sta $01     // ... with %00110111 so CPU can see them
+    sta $01                                     // ... with %00110111 so CPU can see them
     cli
 
     lda VIC.GRAPHICS_POINTER
@@ -203,8 +200,9 @@ updateTargetAddress:
 .segment Default "raster interrupt"             // shows the bytes for this code, when using -showmem
                                                 // helpful to check whether it all fits into the same page
 interruptHandler:
+    // line $37, #55
     // when this code is started, 38-45 cycles already passed
-    // in the current raster line (completing asm instruction, saving return address and rgisters)
+    // in the current raster line (completing asm instruction, saving return address and registers)
     // Now we create a new raster interrupt, but this time, we are in control of excuted commands
     // The remaining cycles in this raster line are not sufficient to set this up, so we select
     // the current rasterline + 2.
@@ -254,6 +252,7 @@ interruptHandler:
     nop                                         // 2 cycles (66)
 
 secondRasterInterrupt: {
+    // $39, #57
     // we are now in rasterline start + 2 and so 
     // we used exactly 38 or 39 cycles.
     // This is safe to assume, because the interrupt happened on execution of NOPs.
@@ -279,8 +278,8 @@ secondRasterInterrupt: {
                                                 // make sure this command and target are in the same page, otherwise
                                                 // this beq takes an extra cycle and messes up the precise timing.
 }
-
 finalRasterInterruptStart:
+    // $3a, #58
                                                 //  3
     ldx #8                                      //  5: 2
  !: dex
@@ -289,15 +288,15 @@ finalRasterInterruptStart:
     lda SineTable,y                             // 52: 4, current sine value
     ldx CharsetTable,y                          // 56: 4
     bit $01                                     // 59: 3
-    //nop                                         // 59: 2
 
 // 4 raster lines happened before
+// $3b, #59
 fullGoodRasterLine:
-    sta VIC.CONTR_REG                           // 63: 4 // store exctly before new line starts
+    sta VIC.CONTR_REG                           // 63: 4 // store exactly before new line starts
     stx VIC.GRAPHICS_POINTER                    // 4: 4
     iny                                         // 6: 2
 .label sineTableIndexEnd1 = *+1          
-    cpy #LogoHeightInRasterLines                // 8: 2
+    cpy #(LogoHeightInRasterLines - 1)          // 8: 2
     bpl exit                                    // 10: 2 no jump when y is within sine table
     ldx #3                                      // 12: 2
  !: dex                                         // 
@@ -334,36 +333,40 @@ badLine:
     sta VIC.CONTR_REG                           //  4: 4  
     lda SineTable,y                             //  8: 4
     ldx CharsetTable,y                          // 12: 4
-    nop                                         // 14: 2
+    iny                                         // 14: 2
     nop                                         // 16: 2
     jmp fullGoodRasterLine                      // 19: 3
 
-exit:
-//    clc
-//    lda VIC.CURRENT_RASTERLINE_REG
-//    adc #2
-// !:   cmp VIC.CURRENT_RASTERLINE_REG
-//    bne !-
-    lda #%00001000
-    sta VIC.CONTR_REG
+exit:                                           // 11
+    // we need to wait until the line is drawn completely before switching back to defaults
+    lda #<interruptHandler                      // 13: 2 restore first interrupt handler address
+    sta Internals.InterruptHandlerPointerRamLo  // 17: 4
+    lda #>interruptHandler                      // 19: 2
+    sta Internals.InterruptHandlerPointerRamHi  // 23: 4
 
-    lda #(VIC.SELECT_SCREENBUFFER_AT_0400_MASK | VIC.SELECT_CHARSET_AT_1000_MASK)
-    sta VIC.GRAPHICS_POINTER
+    lda #RasterInterruptLine                    // 25: 2 restore first raster line
+    sta VIC.CURRENT_RASTERLINE_REG              // 29: 4
 
-    lda #<interruptHandler                      // restore first interrupt handler address
-    sta Internals.InterruptHandlerPointerRamLo
-    lda #>interruptHandler
-    sta Internals.InterruptHandlerPointerRamHi
+    lda #VIC.ENABLE_RASTER_INTERRUPT_MASK       // 31: 2 ack interrupt
+    sta VIC.INTERRUPT_EVENT                     // 35: 4
 
-    lda #RasterInterruptLine                    // restore first raster line
-    sta VIC.CURRENT_RASTERLINE_REG
+    nop                                         // 37
+    nop                                         // 39
+    nop                                         // 41
+    nop                                         // 43
+    nop                                         // 45
+    nop                                         // 47
+    nop                                         // 49
+    nop                                         // 51
 
-    lda #VIC.ENABLE_RASTER_INTERRUPT_MASK       // ack interrupt
-    sta VIC.INTERRUPT_EVENT
+    lda #%00001000                              // 53: 2
+    sta VIC.CONTR_REG                           // 57: 4
+
+    lda #(VIC.SELECT_SCREENBUFFER_AT_0400_MASK | VIC.SELECT_CHARSET_AT_1000_MASK)   // 59: 2
+    sta VIC.GRAPHICS_POINTER                    // 63: 4
 
 
 setCurrentSineIndex:
-    //inc $d020
     inc CurrentSineIndex
     lda CurrentSineIndex
     cmp #LogoHeightInRasterLines
@@ -372,11 +375,8 @@ setCurrentSineIndex:
     sta CurrentSineIndex
 noSineIndexReset:
     clc
-    adc #LogoHeightInRasterLines - 7
+    adc #(LogoHeightInRasterLines - 1)
     sta sineTableIndexEnd1
-    //sta sineTableIndexEnd2
-
-    //dec $d020
 
     jmp Internals.InterruptHandlerPointer       // jump to system timer interrupt code
 
@@ -394,9 +394,6 @@ SineTable:
             .byte sineValue | %000001000
         }
     }
-    .byte 0 | %000001000
-    .byte 0 | %000001000
-    ////.fill LogoHeightInRasterLines * 2, 15 * abs(sin(toRadians((i*360)/(sineSteps)))) | %000001000
 SineTableEnd:
 
 .align $100
@@ -410,7 +407,4 @@ CharsetTable:
             .byte (VIC.SELECT_SCREENBUFFER_AT_0400_MASK | VIC.SELECT_CHARSET_AT_3000_MASK)
         }
     }
-    .byte (VIC.SELECT_SCREENBUFFER_AT_0400_MASK | VIC.SELECT_CHARSET_AT_3000_MASK)
-    .byte (VIC.SELECT_SCREENBUFFER_AT_0400_MASK | VIC.SELECT_CHARSET_AT_3000_MASK)
-    //.fill LogoHeightInRasterLines * 2, 7 * abs(sin(toRadians((i*360)/(sineSteps)))) | %000001000
 CharsetTableEnd:
