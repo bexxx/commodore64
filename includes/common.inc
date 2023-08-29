@@ -37,3 +37,4 @@ waitForRasterChange:
     ora #%00011000                              // restore text mode default (consider adding this as parameter)
     sta VIC.SCREEN_CONTROL_REG                  // write back
 }
+
