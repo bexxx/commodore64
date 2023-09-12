@@ -9,7 +9,7 @@ Challenges were supporting > 255 characters, I had to read through existing code
 
 Added some color cycling as well to make this fancy. Now the 80s are calling to get their scrollers back.
 
-# Dotted Zoom Scroller
+# Dotted 8x scale charset scroller
 Here we zoom a char to 8x8 characters. As a nice addition, there is a matrix of dot characters and instead of drawing 8x8 characters, I write to color ram to color the dots. 
 On top we'll use a custom charset because the one from rom is boring.
 Interesting parts are how to calculate the char's 8 bitmap address (shift letter 3 times left and inc to hi address on carry). The rest is basic. Nice extensions will be color support or blinking words. 
