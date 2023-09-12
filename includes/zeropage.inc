@@ -8,7 +8,11 @@
                                 // Bit 5 - Cassette Motor Control; 0 = On, 1 = Off
                                 // Bit 6 - Undefined
                                 // Bit 7 - Undefined
+                                // Note: This reg uses low active bits (0 = enable, 1 = disable)
     .label ENABLE_ROM_MASK = %10
+
+    .label ENABLE_CHAREN_MASK = ~%00000100                  // active low! Use and to set
+    .label ENABLE_CHAREN_CLEAR_MASK = ~ENABLE_CHAREN_MASK   // active low! Use ora to clear
 
     .label Unused_02 = $02
     .label Unused_FB = $FB

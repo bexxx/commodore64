@@ -163,14 +163,15 @@
     .label SELECT_CHARSET_AT_3800_MASK = %1110 // start at $3800	
     .label SELECT_CHARSET_CLEAR_MASK = ~%00001111 // select screenbuffer with bits 3-0, 0 unused in textmode
 
+    .label ColorRamBase = $d800
 }
 
 .macro ConfigureVicMemory(ScreenBufferMask, CharsetBufferMask) {
     lda VIC.GRAPHICS_POINTER
     and #VIC.SELECT_CHARSET_CLEAR_MASK
-    ora #VIC.SELECT_CHARSET_AT_0000_MASK
+    ora #CharsetBufferMask
     and #VIC.SELECT_SCREENBUFFER_CLEAR_MASK
-    ora #VIC.SELECT_SCREENBUFFER_AT_2000_MASK
+    ora #ScreenBufferMask
     sta VIC.GRAPHICS_POINTER
 }
 
