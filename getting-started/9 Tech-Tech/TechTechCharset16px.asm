@@ -77,9 +77,9 @@ charsDone:
 
     sei
 
-    lda $01     // clear charrom bit (active low)
+    lda Zeropage.PORT_REG     // clear charrom bit (active low)
     and #%11111011
-    sta $01     // ...at $D000 by storing %00110011 into location $01
+    sta Zeropage.PORT_REG     // ...at $D000 by storing %00110011 into location $01
 
     // we keep the current vic bank (0) and we clone the rom charset from $d000 to
     // $2000 
@@ -157,9 +157,9 @@ updateTargetAddress:
 
 !emptyCharDone:
 
-    lda $01                                     // switch in I/O mapped registers again...
+    lda Zeropage.PORT_REG                       // switch in I/O mapped registers again...
     ora #%00000100
-    sta $01                                     // ... with %00110111 so CPU can see them
+    sta Zeropage.PORT_REG                       // ... with %00110111 so CPU can see them
     cli
 
     lda VIC.GRAPHICS_POINTER

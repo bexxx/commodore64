@@ -8,7 +8,7 @@
 .const RasterInterruptLine = $5f
 .const YScrollResetIrqRasterLine = $20
 .const SkipFrames = 8
-.const MaxDuplicateLines = 12
+.const MaxDuplicateLines = 45
 
 BasicUpstart2(main)
 
@@ -183,7 +183,7 @@ startOfNormalLine:                                  // 0
     bne !-                                          // 31: 6*5cycles-1cycle=29cycle
     lda VIC.CURRENT_RASTERLINE_REG                  // 35
     and #%00000111                                  // 37
-    cmp #%00000010                                  // 39
+    cmp #%00000010                                  // 39 %011 is YSCROLL default
     bne restOfNormalLine                            // 42 for another normal line, 41 on last normal line before a bad line
     nop                                             // 43
     bit $01                                         // 46

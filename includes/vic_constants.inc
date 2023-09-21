@@ -15,6 +15,7 @@
     .label ENABLE_25_LINES_CLEAR_MASK = ~ENABLE_25_LINES_MASK
     .label ENABLE_40_COLUMNS_MASK = %00001000
     .label ENABLE_40_COLUMNS_CLEAR_MASK = ~ENABLE_40_COLUMNS_MASK
+    .label ENABLE_MULTICOLOR_MASK = %00010000
 
     .label CURRENT_RASTERLINE_REG = $d012
 
@@ -132,8 +133,17 @@
     .label lblue = $e
     .label lgrey = $f
 
+    // First 8 C64 Colors in multicolor mode
+    .label black_mc = black + 8
+    .label white_mc = white + 8
+    .label red_mc = red + 8
+    .label cyan_mc = cyan + 8
+    .label purple_mc  = purple + 8
+    .label green_mc = green + 8
+    .label blue_mc = blue + 8
+    .label yellow_mc = yellow + 8
+
     .label BITMAP_MODE = %00100000
-    .label MULTI_COLOR = %00010000
 
     .label SELECT_SCREENBUFFER_AT_0000_MASK = %0000 << 4 // start at $0000
     .label SELECT_SCREENBUFFER_AT_0400_MASK = %0001 << 4 // start at $0400	
