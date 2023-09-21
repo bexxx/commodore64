@@ -236,25 +236,24 @@ SineValuesForD018Overflow:
 // slows down loading and needs time decrunching. Instead we are transforming the sine cosine values
 // and generate 2 tables out of it with double length (to allow x-indexing to overflow after 256 bytes) 
 generateDataTables:
-        ldx #$0
-        ldy #$0
-!:      lda SineValues,y
-        and #7                                  // take lower 3 bits only for XScroll in $d016
-        ora #VIC.ENABLE_MULTICOLOR_MASK         // multi color mode
-        sta SineValuesForD016,x                 // 
-        sta SineValuesForD016Overflow,x         // 
+    ldx #$0
+    ldy #$0
+!:  lda SineValues,y
+    and #7                                  // take lower 3 bits only for XScroll in $d016
+    ora #VIC.ENABLE_MULTICOLOR_MASK         // multi color mode
+    sta SineValuesForD016,x                 // 
+    sta SineValuesForD016Overflow,x         // 
+    lda SineValues,y                        // divide by 8, multiply by 16 to get videoram index
+    asl                                     // equals multiply by two
+    and #$f0
+    adc #$20                                // carry is clear from asl because sine values < 128
+    sta SineValuesForD018,x
+    sta SineValuesForD018Overflow,x
+    iny
+    inx
+    bne !-
 
-        lda SineValues,y                        // divide by 8, multiply by 16 to get videoram index
-        asl                                     // equals multiply by two
-        and #$f0
-        adc #$20                                // carry is clear from asl because sine values < 128
-        sta SineValuesForD018,x
-        sta SineValuesForD018Overflow,x
-        iny
-        inx
-        bne !-
-
-        rts
+    rts
 
 spreadScreenBuffer:
     // Set up the videoram banks for the tech-tech effect
