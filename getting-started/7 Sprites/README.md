@@ -18,6 +18,8 @@ Task:
 
     This is the first time I totally underestimated the complexity and had to rewrite the parts multiple times.
     I am using a buffer to sort the sprite numbers as shown on screen to simplify my life and to reduce cycles.
+    
+    Thanks Fieser Wolf^Abyss Connection for the homework!
 
 Used sources:
 - [Retro-programming blog](https://www.retro-programming.de/programming/assembler/demo-effekte/oberen-unteren-rand-offnen/)
