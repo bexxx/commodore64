@@ -14,7 +14,6 @@ main:
     sta VIC.SPRITE_ENABLE                   
     lda #%00000000
     sta $d01d
-    sta VIC.MULTI_COLOR
     sta VIC.SPRITE_DOUBLE_X
     sta VIC.SPRITE_DOUBLE_Y
 
@@ -27,7 +26,7 @@ main:
     lda #343-24
     sta VIC.SPRITE_2_X
 
-    lda #8
+    lda #16
     sta VIC.SPRITE_0_Y
     sta VIC.SPRITE_1_Y
     sta VIC.SPRITE_2_Y
@@ -111,7 +110,6 @@ set24:
     sta VIC.CURRENT_RASTERLINE_REG
 
 exit:    
-    //jmp Internals.InterruptHandlerPointer
     ReturnFromInterrupt()                       // leave interrupt handler
 
 enableSprites:

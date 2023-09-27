@@ -59,13 +59,13 @@
     .label SPRITE_POINTER_0_OFFSET = $03f8
     .label SPRITE_POINTER_1_OFFSET = $03f9
     .label SPRITE_POINTER_2_OFFSET = $03fa
-    .label SPRITE_POINTER_3_OFFSET = $07fb
-    .label SPRITE_POINTER_4_OFFSET = $037fc
+    .label SPRITE_POINTER_3_OFFSET = $03fb
+    .label SPRITE_POINTER_4_OFFSET = $03fc
     .label SPRITE_POINTER_5_OFFSET = $03fd
     .label SPRITE_POINTER_6_OFFSET = $03fe
     .label SPRITE_POINTER_7_OFFSET = $03ff
 
-    // sprite screen locations
+    // sprite screen positions
     .label SPRITE_0_X = $d000
     .label SPRITE_0_Y = $d001
     .label SPRITE_1_X = $d002
@@ -81,7 +81,7 @@
     .label SPRITE_6_X = $d00c
     .label SPRITE_6_Y = $d00d
     .label SPRITE_7_X = $d00e
-    .label SPRITE_7_Y = $d00d
+    .label SPRITE_7_Y = $d00f
     .label SPRITE_MSB_X = $d010
 
     // high res or multicolor
