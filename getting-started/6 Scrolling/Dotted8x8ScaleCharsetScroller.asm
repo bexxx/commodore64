@@ -109,7 +109,7 @@ exitInterrupt:
 .align $100
 .segment Default "scroll text"
 scrolltext:
-  .text "my first zoom scroller with a custom font. nooiiice! i like it. setting color ram instead of chars looks cute too. bexxx out.         "
+  .text "my first scale scroller with a custom font. nooiiice! i like it. setting color ram instead of chars looks cute too. bexxx out.         "
   .byte 0
 
 currentCharIndex:

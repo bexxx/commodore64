@@ -11,8 +11,10 @@
 }
 
 .macro SelectVicMemoryBank(BankMask) {
+    cli
     lda CIA2.DATA_PORT_A 
     and #CIA2.VIC_SELECT_BANK_CLEAR_MASK
     ora #BankMask
     sta CIA2.DATA_PORT_A
+    sei
 }

@@ -13,11 +13,21 @@
 
     .label ENABLE_CHAREN_MASK = ~%00000100                  // active low! Use and to set
     .label ENABLE_CHAREN_CLEAR_MASK = ~ENABLE_CHAREN_MASK   // active low! Use ora to clear
+    .label ENABLE_LORAM_MASK = ~%00000001
+    .label ENABLE_HIRAM_MASK = ~%00000010
 
     .label Unused_02 = $02
     .label Unused_FB = $FB
     .label Unused_FC = $FC
     .label Unused_FD = $FD
     .label Unused_FE = $FE
+}
 
+.macro SetMemoryConfig(mask) {
+    lda #mask
+    sta Zeropage.PORT_REG 
+}
+
+.macro SetFullRamWithIoConfig() {
+    SetMemoryConfig(%00110101)
 }

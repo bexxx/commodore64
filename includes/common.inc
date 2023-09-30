@@ -22,6 +22,7 @@ waitForNewFrame:
 !:  lda VIC.SCREEN_CONTROL_REG                      
     bmi !-                                      // wait until the 7th bit is clear (=> line 0 of raster)
 }
+
 .macro BusyWaitForNextRasterLine() {
     lda VIC.CURRENT_RASTERLINE_REG              // load current raster line
 waitForRasterChange:
@@ -38,3 +39,14 @@ waitForRasterChange:
     sta VIC.SCREEN_CONTROL_REG                  // write back
 }
 
+.macro MakeClearScreenFunction(VicBankStart, ScreenStart) {
+    lda #00
+    tax
+!:  sta VicBankStart + ScreenStart + $0000,x
+    sta VicBankStart + ScreenStart + $0100,x
+    sta VicBankStart + ScreenStart + $0200,x
+    sta VicBankStart + ScreenStart + $0300,x
+    dex
+    bne !-
+    rts
+}

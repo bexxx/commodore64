@@ -160,7 +160,7 @@
     .label SELECT_SCREENBUFFER_AT_3000_MASK = %1100 << 4 // start at $3000
     .label SELECT_SCREENBUFFER_AT_3400_MASK = %1101 << 4 // start at $3400	
     .label SELECT_SCREENBUFFER_AT_3800_MASK = %1110 << 4 // start at $3800
-    .label SELECT_SCREENBUFFER_AT_38C0_MASK = %1111 << 4 // start at $3C00
+    .label SELECT_SCREENBUFFER_AT_3C00_MASK = %1111 << 4 // start at $3C00
     .label SELECT_SCREENBUFFER_CLEAR_MASK = ~(%1111 << 4) // select screenbuffer with bits 7-4
 
     .label SELECT_CHARSET_AT_0000_MASK = %0000 // start at $0000

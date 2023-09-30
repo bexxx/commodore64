@@ -4,7 +4,7 @@
 #import "../../includes/zeropage.inc"
 #import "../../includes/common.inc"
 
-.var music = LoadSid("../A Playing SID songs/Retrospectful.sid")
+.var music = LoadSid("../E Custom Charset/Retrospectful.sid")
 .const RasterInterruptLine = $34
 .var CurrentSineTableIndex = Zeropage.Unused_02
 
