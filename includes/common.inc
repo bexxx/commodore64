@@ -1,4 +1,5 @@
 #import "./vic_constants.inc"
+#import "./zeropage.inc"
 
 .macro ReturnFromInterrupt() {
     pla
@@ -49,4 +50,48 @@ waitForRasterChange:
     dex
     bne !-
     rts
+}
+
+.macro MakeCopyCharRomFunction(VicBank, CharsetStart) {
+    .var targetCharsetAddress = VicBank * $4000 + CharsetStart
+
+// copy charset from $d000 (ROM) to VicBankStart+CharsetStart
+    sei 
+
+    lda Zeropage.PORT_REG                   // enable chartset rom at $d000
+    and #Zeropage.ENABLE_CHAREN_MASK
+    sta Zeropage.PORT_REG               
+
+    ldx #$00                               
+copyLoop:    
+    .for (var page=0; page < 8; page++) {   // we loop 8 times (8x255 = 2Kb)
+        lda $d000 + page * $100,x
+        sta targetCharsetAddress + page * $100,x
+    }
+    dex
+    bne copyLoop
+
+    lda Zeropage.PORT_REG                   // switch in I/O mapped registers again...
+    ora #Zeropage.ENABLE_CHAREN_CLEAR_MASK
+    sta Zeropage.PORT_REG     
+
+    cli                                     // turn off interrupt disable flag
+    
+    rts    
+}
+
+.macro MakeCopyScreenRamFunction(SourceVicBank, SourceScreenOffset, TargetVicBank, TargetScreenOffset) {
+    .var sourceBufferStart = SourceVicBank * $4000 + SourceScreenOffset
+    .var targetBufferStart = TargetVicBank * $4000 + TargetScreenOffset
+    ldx #$00
+copyLoop:
+    // copy 2k screen ram unrolled 4x 256 bytes
+.for(var page = 0; page < 4; page++) {    
+    lda sourceBufferStart + page * $100,x
+    sta targetBufferStart + page * $100,x
+ }
+    dex
+    bne copyLoop
+
+    rts    
 }

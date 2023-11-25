@@ -1,3 +1,5 @@
+#importonce 
+
 .namespace Zeropage
 {
     .label PORT_REG = $01       // Bit 0 - LORAM: Configures RAM or ROM at $A000-$BFFF (see bankswitching)
