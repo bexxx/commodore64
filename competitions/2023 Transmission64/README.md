@@ -33,5 +33,6 @@ Used sources/tools:
 - [Dirmaster](https://style64.org/dirmaster)
 - [Dart](https://csdb.dk/release/?id=226262&show=summary)
 - [Directory Art Howto](https://mingos-commodorepage.com/tutorials/c64dirart.php)
+- [Directory Art Inspired by Arcanum by Xenon, X Party 2000](https://csdb.dk/release/?id=11588)
 - [C64 Wiki](https://www.c64-wiki.de/)
 - [Exomizer2](https://github.com/bitshifters/exomizer)
