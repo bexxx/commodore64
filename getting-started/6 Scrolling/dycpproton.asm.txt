@@ -1,0 +1,553 @@
+
+speed1 = 1
+speed2 = 254
+delta1 = 250
+delta2 = 249
+amplitude = 170
+raster = 177
+
+mul1 = 4
+mul2 = 5 
+charptr = 6
+scnptr1 = 8
+fontptr = 10
+sin1 = 12
+sin2 = 13
+sin1a = 14
+sin2a = 15
+textptr = 16
+
+temp = 255
+sine = $0200
+
+        * = $0801
+        .text 12,8,0,0,$9e,"2061",0,0,0
+        jmp start
+
+stable  .byte $34,$41,$3b,$21,$34,$21,$32,$21,$31,$21,$31,$22,$31,$29,$11
+        .byte $22,$12,$21,$13,$21,$12,$01,$13,$01,$11,$02,$11,$03,0
+
+make_sinus
+        ldx #0          ; nasty routine, 256b sinus in 96b code+data
+        ldy #0
+mksin1  lda stable,y    ; feel free to find out how it works
+        beq _dtok       ; create curve until 0
+        pha
+        and #15         ; extract repeat counter
+        sta 2
+        pla
+        lsr
+        lsr
+        lsr
+        lsr
+-       sta $100,x      ; temporarily fill stack to delta-table
+        inx
+        dec 2
+        bne -
+        iny             ; next data
+        bne mksin1      ; branch always as data is very small
+_dtok   ldy #0
+        ldx #64
+        lda #128        ; middle-value
+mksin2  sta sine,y     ; render positive rising curvee
+        sta sine+64,x  ; falling curve backwards
+        pha
+        and #$7f
+        sta 2           ; save current level
+        lda #128
+        sec
+        sbc 2           ; flip to negative level
+        sta sine+128,y ; and render negative curves
+        sta sine+192,x
+        pla             ; restore original current value
+        clc
+        adc $0100,y     ; apply delta
+        iny             ; iterate until done.
+        dex
+        bpl mksin2
+        rts
+
+multiply
+        sta mul1        ; multiply value mul1 by value mul2 
+        stx mul2
+        lda #0
+        ldx #8
+        clc
+-       bcc +
+        clc 
+        adc mul2
++       ror
+        ror mul1
+        dex
+        bpl -
+        ; ldx mul1        ; result in accu+xr
+        rts        
+
+start
+        sei
+        lda #0
+        sta $d011
+        jsr make_sinus
+
+        ldy #0
+-       lda sine,y
+        ldx #amplitude
+        jsr multiply
+        ror             ; +/-63 amplitude
+        sta sine,y
+        iny
+        bne -
+
+        lda #<scrolltext 
+        sta textptr
+        lda #>scrolltext
+        sta textptr+1
+ 
+        ldy #0
+-       lda #255
+        sta $0400,y
+        sta $0500,y
+        sta $0600,y
+        sta $0700,y
+        lda #0
+        sta $d800,y
+        sta $d900,y
+        sta $da00,y
+        sta $db00,y
+        sta $3000,y
+        sta $3100,y
+        sta $3200,y
+        sta $3700,y
+        sta $3800,y
+        sta $3900,y
+        sta $3a00,y
+        sta $3f00,y
+        iny 
+        bne -
+        
+        lda #12
+        sta $d020
+        sta $d021
+        lda #$1b 
+        sta $d011
+
+-       lda #raster
+        cmp $d012
+        bne *-3
+        lda #12
+        sta $d020
+
+        jsr dycp
+mcr     lda #$1c
+        eor #2
+        sta mcr+1
+        sta $d018        
+
+scrollx lda #0
+        sta $d016
+        jsr scroll
+
+        lda #5
+        sta $d020
+        jmp -
+
+scroll  lda scrollx+1
+        sec
+        sbc #1
+        bcc +
+        sta scrollx+1
+        rts
++       adc #8
+        sta scrollx+1
+        lda sin1
+        clc
+        adc #delta1
+        sta sin1
+        lda sin2
+        sec
+        sbc #delta2
+        sta sin2
+        ldx #0
+-       lda charptrshi+1,x
+        sta charptrshi,x
+        lda charptrslo+1,x
+        sta charptrslo,x
+        inx
+        cpx #39
+        bne -        
+
+
+        ldx #$d8/2      ; locase ROM at $d800
+        ldy #0
+        lda (textptr),y ; read scrolltext (high nybble)
+        cmp #$ff        ; end of texts?
+        bne _noend
+        lda #<scrolltext 
+        sta textptr
+        lda #>scrolltext
+        sta textptr+1
+        lda #" "
+_noend
+        bpl _nocaps     ; check upper/lowercase
+        ldx #$d0/2      ; upcase ROM at $d000. /2 because of rol below
+_nocaps 
+        stx charptrshi+39 ; font pointer msb
+        and #$3f        ; mask extra bits off to get charcode
+        asl             ; *8
+        asl
+        asl
+        rol charptrshi+39
+        sta charptrslo+39
+
+        inc textptr  ; update scrollptr
+        bne +
+        inc textptr+1
++
+        rts
+
+
+dycp
+        lda mcr+1
+        and #2
+        bne +
+        ldx #$38
+        lda #0
+        sta charptr
+        stx charptr+1
+        jsr clear38
+        jmp dycp38
++
+        ldx #$30
+        lda #0
+        sta charptr
+        stx charptr+1
+        jsr clear30
+dycp30
+        lda #$33
+        sta 1
+
+        lda sin1 
+        clc
+        adc #speed1
+        sta sin1 
+        sta sin1a 
+        lda sin2 
+        clc
+        adc #speed2
+        sta sin2
+        sta sin2a
+        .for i := 0, i < 40, i += 1
+-       clc
+        lda sin1a
+        tay 
+        adc #delta1
+        sta sin1a
+        lax sin2a
+        sbc #delta2
+        sta sin2a 
+        lda sine,x
+        adc sine,y
+        tax 
+        lsr
+        lsr
+        lsr
+        tay 
+        lda screenrowsl,y
+        sta scnptr1
+        lda screenrowsh,y
+        sta scnptr1+1 
+
+        lda #255
+        ldy #i 
+        sta (scnptr1),y 
+        ldy #40+i 
+        sta (scnptr1),y 
+        ldy #160+i 
+        sta (scnptr1),y 
+        ldy #200+i 
+        sta (scnptr1),y 
+        ldy #80+i
+        lda #i*2
+        sta (scnptr1),y 
+        ldy #120+i
+        lda #i*2+1
+        sta (scnptr1),y 
+
+        lda charptrslo+i
+        sta fontptr
+        lda charptrshi+i 
+        sta fontptr+1
+
+        txa
+        and #7
+        .if i < 16
+        ora #i*16
+        tax
+        ldy #0
+        lda (fontptr),y
+        sta $3000+0,x
+        iny
+        lda (fontptr),y
+        sta $3000+1,x
+        iny
+        lda (fontptr),y
+        sta $3000+2,x
+        iny
+        lda (fontptr),y
+        sta $3000+3,x
+        iny
+        lda (fontptr),y
+        sta $3000+4,x
+        iny
+        lda (fontptr),y
+        sta $3000+5,x
+        iny
+        lda (fontptr),y
+        sta $3000+6,x
+        iny
+        lda (fontptr),y
+        sta $3000+7,x
+        .endif
+        .if i > 15 && i < 32
+        ora #i*16-256
+        tax
+        ldy #0
+        lda (fontptr),y
+        sta $3100+0,x
+        iny
+        lda (fontptr),y
+        sta $3100+1,x
+        iny
+        lda (fontptr),y
+        sta $3100+2,x
+        iny
+        lda (fontptr),y
+        sta $3100+3,x
+        iny
+        lda (fontptr),y
+        sta $3100+4,x
+        iny
+        lda (fontptr),y
+        sta $3100+5,x
+        iny
+        lda (fontptr),y
+        sta $3100+6,x
+        iny
+        lda (fontptr),y
+        sta $3100+7,x
+        .endif
+        .if i > 31
+        ora #i*16-512
+        tax
+        ldy #0
+        lda (fontptr),y
+        sta $3200+0,x
+        iny
+        lda (fontptr),y
+        sta $3200+1,x
+        iny
+        lda (fontptr),y
+        sta $3200+2,x
+        iny
+        lda (fontptr),y
+        sta $3200+3,x
+        iny
+        lda (fontptr),y
+        sta $3200+4,x
+        iny
+        lda (fontptr),y
+        sta $3200+5,x
+        iny
+        lda (fontptr),y
+        sta $3200+6,x
+        iny
+        lda (fontptr),y
+        sta $3200+7,x
+        .endif
+        .endfor
+        lda #$37
+        sta 1
+        rts
+
+        * = $4000
+dycp38
+        lda #$33
+        sta 1
+
+        lda sin1 
+        clc
+        adc #speed1
+        sta sin1 
+        sta sin1a 
+        lda sin2 
+        clc
+        adc #speed2
+        sta sin2
+        sta sin2a
+        .for i := 0, i < 40, i += 1
+-       clc
+        lda sin1a
+        tay 
+        adc #delta1
+        sta sin1a
+        lax sin2a
+        sbc #delta2
+        sta sin2a 
+        lda sine,x 
+        adc sine,y
+        tax 
+        lsr
+        lsr
+        lsr
+        tay 
+        lda screenrowsl,y
+        sta scnptr1
+        lda screenrowsh,y
+        sta scnptr1+1 
+
+        lda #255
+        ldy #i 
+        sta (scnptr1),y 
+        ldy #40+i 
+        sta (scnptr1),y 
+        ldy #160+i 
+        sta (scnptr1),y 
+        ldy #200+i 
+        sta (scnptr1),y 
+        ldy #80+i
+        lda #i*2
+        sta (scnptr1),y 
+        ldy #120+i
+        lda #i*2+1
+        sta (scnptr1),y 
+
+        lda charptrslo+i
+        sta fontptr
+        lda charptrshi+i 
+        sta fontptr+1
+
+        txa
+        and #7
+        .if i < 16
+        ora #i*16
+        tax
+        ldy #0
+        lda (fontptr),y
+        sta $3800+0,x
+        iny
+        lda (fontptr),y
+        sta $3800+1,x
+        iny
+        lda (fontptr),y
+        sta $3800+2,x
+        iny
+        lda (fontptr),y
+        sta $3800+3,x
+        iny
+        lda (fontptr),y
+        sta $3800+4,x
+        iny
+        lda (fontptr),y
+        sta $3800+5,x
+        iny
+        lda (fontptr),y
+        sta $3800+6,x
+        iny
+        lda (fontptr),y
+        sta $3800+7,x
+        .endif
+        .if i > 15 && i < 32
+        ora #i*16-256
+        tax
+        ldy #0
+        lda (fontptr),y
+        sta $3900+0,x
+        iny
+        lda (fontptr),y
+        sta $3900+1,x
+        iny
+        lda (fontptr),y
+        sta $3900+2,x
+        iny
+        lda (fontptr),y
+        sta $3900+3,x
+        iny
+        lda (fontptr),y
+        sta $3900+4,x
+        iny
+        lda (fontptr),y
+        sta $3900+5,x
+        iny
+        lda (fontptr),y
+        sta $3900+6,x
+        iny
+        lda (fontptr),y
+        sta $3900+7,x
+        .endif
+        .if i > 31
+        ora #i*16-512
+        tax
+        ldy #0
+        lda (fontptr),y
+        sta $3a00+0,x
+        iny
+        lda (fontptr),y
+        sta $3a00+1,x
+        iny
+        lda (fontptr),y
+        sta $3a00+2,x
+        iny
+        lda (fontptr),y
+        sta $3a00+3,x
+        iny
+        lda (fontptr),y
+        sta $3a00+4,x
+        iny
+        lda (fontptr),y
+        sta $3a00+5,x
+        iny
+        lda (fontptr),y
+        sta $3a00+6,x
+        iny
+        lda (fontptr),y
+        sta $3a00+7,x
+        .endif
+        .endfor
+        lda #$37
+        sta 1
+        rts
+
+clear30
+        .for i := 0, i < 640, i += 1
+        sta $3000+i 
+        .endfor
+        rts
+        
+
+clear38
+        .for i := 0, i < 640, i += 1
+        sta $3800+i 
+        .endfor
+        rts
+        
+
+
+sinvalues
+        .fill 40,0
+charptrslo
+        .fill 40,0
+charptrshi
+        .fill 40,$d1 
+
+screenrowsl 
+        .for i := 0, i < 27, i += 1
+        .byte <$03d8+40*i
+        .endfor
+screenrowsh 
+        .for i := 0, i < 27, i += 1
+        .byte >$03d8+40*i
+        .endfor
+
+scrolltext
+        .text   "    This is an example of traditional tall DYCP-scroller made for DerBexxx.   "
+        .text   " All memory-unfriendly code was written by Proton of Finnish Gold             ",255
