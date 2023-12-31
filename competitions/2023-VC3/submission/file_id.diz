@@ -1,0 +1,20 @@
+VC3 - This time before deadline
+
+Author: Ralf "bexxx" Beckers / MoonShine
+Category: Christmas Challenge
+System: C64
+Language: Assembler (kickassembler)
+Len source code: 433
+Len exe file: 72
+Len code only: 59
+Instructions:
+Just run on machine or drag and drop into vice
+Description:
+1. Algorithm prints 3 rectangles, some chars are overwritten, which is fine. Rectangles end on the outer edges of the shape
+2. Using x and y offset == 0 to use bpl / bne branches instead of cmp & branch
+3. Using $39 in zero page to calc the x start of the squares, first initialization by low byte of basic line number. lda,sta with zp also have shorter opcodes. Noice! (Thanks Serato/FIG for documenting this in the xmas challenge from 2021!)
+4. rts at the end would overwrite shape with READY, jmp to same address would be 3 bytes, doing a beq instead to save 1 byte
+5. Not initializing x register (for y). It's 0 on start, which is perfect (see xy offsets). Updated the algorithm to not decrement to -1 on the last side of the rectangle but stop on 0 to reuse that value in the next iteration.
+Comments:
+Full source available here after deadline: https://github.com/bexxx/commodore64/tree/main/competitions/2023-VC3
+The files with -colored show that the code works by using colored * for printing. This code is 5 bytes longer because of the lda and jsr to setup the colors.
