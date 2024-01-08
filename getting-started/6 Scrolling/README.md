@@ -28,3 +28,5 @@ Used sources:
 - [Fieser Wolf / Abyss-Connection, Sinusgen](https://github.com/fieserWolF/sinusgen)
 - [SID tune Retrospectful by Drax](https://csdb.dk/release/?id=115027)
 - [THE vic ii text](http://www.zimmers.net/cbmpics/cbm/c64/vic-ii.txt)
+- [SpriteMate to export to asm](https://www.spritemate.com/)
+- [Petscii editor to create sprites](https://petscii.krissz.hu/)
