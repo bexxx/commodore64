@@ -31,3 +31,15 @@ waitNFrames: {
 
     rts
 }
+
+disableDisplay:
+    lda VIC.SCREEN_CONTROL_REG 
+    and #VIC.ENABLE_SCREEN_CLEAR_MASK
+    sta VIC.SCREEN_CONTROL_REG 
+    rts
+
+enableDisplay:
+    lda VIC.SCREEN_CONTROL_REG 
+    ora #VIC.ENABLE_SCREEN_MASK
+    sta VIC.SCREEN_CONTROL_REG 
+    rts

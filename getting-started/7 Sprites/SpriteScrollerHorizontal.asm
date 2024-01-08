@@ -235,8 +235,7 @@ setup:
     SelectVicMemoryBank(CIA2.VIC_SELECT_BANK1_MASK)    
     ConfigureVicMemory(VIC.SELECT_SCREENBUFFER_AT_0000_MASK, VIC.SELECT_CHARSET_AT_1000_MASK)
 
-    lda #0
-    tax
+    lax #0
     tay
     lda #music.startSong - 1
     jsr music.init

@@ -2,6 +2,11 @@
 
 .namespace VIC
 {
+    .label Bank0 = 0
+    .label Bank1 = 1
+    .label Bank2 = 2
+    .label Bank3 = 3
+
     .label BASE  = $d000
 
     // control registers
