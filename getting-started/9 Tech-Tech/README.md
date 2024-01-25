@@ -1,6 +1,6 @@
 # TechTech
 
-## TechTech Simple
+## TechTech Charset8px
 
 Showing how to change XSCROLL for each raster line within a row of characters.
 This limits swing to 8 pixel, but it's a good start for more. Still doing the exact cycle counting, which is not necessary for this effect. 

@@ -40,13 +40,13 @@ waitForRasterChange:
     sta VIC.SCREEN_CONTROL_REG                  // write back
 }
 
-.macro MakeClearScreenFunction(VicBankStart, ScreenStart) {
+.macro MakeClearScreenFunction(VicBankNumber, ScreenStart) {
     lda #00
     tax
-!:  sta VicBankStart + ScreenStart + $0000,x
-    sta VicBankStart + ScreenStart + $0100,x
-    sta VicBankStart + ScreenStart + $0200,x
-    sta VicBankStart + ScreenStart + $0300,x
+!:  sta VicBankNumber * $4000 + ScreenStart + $0000,x
+    sta VicBankNumber * $4000 + ScreenStart + $0100,x
+    sta VicBankNumber * $4000 + ScreenStart + $0200,x
+    sta VicBankNumber * $4000 + ScreenStart + $0300,x
     dex
     bne !-
     rts

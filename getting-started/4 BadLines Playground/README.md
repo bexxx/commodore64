@@ -9,6 +9,10 @@ Some code snippets to discover and understand bad lines.
 
 This was coded after the excellent blog entry about bad lines from [Retro Programming](https://www.retro-programming.de/).
 
+# Look No Bad Lines Mommy
+
+VIC glitch to disable graphics and therefore not have badlines. Sprites still work, which give lots of cycles to some fun projects :).
+
 Used sources:
 - [Retro Programming, Raster articles](https://www.retro-programming.de/programming/nachschlagewerk/interrupts/]der-rasterzeileninterrupt/raster-irq-endlich-stabil/)
 - [C64 wiki, Raster interrupt](https://www.c64-wiki.de/wiki/Rasterzeilen-Interrupt)

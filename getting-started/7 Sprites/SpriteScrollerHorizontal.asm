@@ -2,12 +2,14 @@
 #import "../../includes/internals.inc"
 #import "../../includes/common.inc"
 #import "../../includes/zeropage.inc"
+#import "../../includes/cia1_constants.inc"
 #import "../../includes/cia2_constants.inc"
 
 .namespace Consts {
     .label RasterLineStart = $fb
     .label ScreenBase = $0000
-    .label VicBankBase = $4000   
+    .label VicBank = 1
+    .label VicBankBase = VicBank * $4000
 }
 
 .var music = LoadSid("../E Custom Charset/retrospectful.sid")
@@ -24,8 +26,8 @@ start:
 
 mainLoop:
     BusyWaitForNewScreen()
-    jsr music.play
 
+    jsr music.play
     //inc $d020                                   // uncomment to see duration of code
 
     // decrement all x coords from all 8 sprites by 1
@@ -55,7 +57,7 @@ ycoords:
     jmp mainLoop                                // end of code, jump back to wait for new frame
 
 clearScreen:
-    MakeClearScreenFunction(Consts.VicBankBase, Consts.ScreenBase)
+    MakeClearScreenFunction(Consts.VicBank, Consts.ScreenBase)
 
     // the leftmost sprite disappears in the left border and need to be moved to the
     // right part (also into the border). Additionally, we copy the char bitmap to the
@@ -231,6 +233,11 @@ incrementScrollPosition:
 setup:
     BusyWaitForNewScreen()
     jsr disableDisplay
+
+    lda #CIA1.CLEAR_ALL_INTERRUPT_SOURCES
+    sta CIA1.INTERRUPT_CONTROL_REG              // disable timer interrupt, no rom better no timer
+    lda CIA1.INTERRUPT_CONTROL_REG              // confirm interrupt, just to be sure
+
     SetFullRamWithIoConfig()
     SelectVicMemoryBank(CIA2.VIC_SELECT_BANK1_MASK)    
     ConfigureVicMemory(VIC.SELECT_SCREENBUFFER_AT_0000_MASK, VIC.SELECT_CHARSET_AT_1000_MASK)
@@ -262,7 +269,6 @@ setup:
 
     jsr clearScreen
     jsr set38ColumnMode
-
     // enable all sprites
     lda #$ff
     sta VIC.SPRITE_ENABLE                   
@@ -322,6 +328,7 @@ setup:
 
     BusyWaitForNewScreen()
     jsr enableDisplay
+    
     rts
 
 disableDisplay:

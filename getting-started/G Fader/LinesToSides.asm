@@ -45,7 +45,7 @@ drawOneColumn:
     rts
 
 currentCharIndex:
-    .byte charTableEnd-charTableStart
+    .byte charTableEnd - charTableStart - 1
 
 leftIndex:
     .byte 19
@@ -54,6 +54,6 @@ rightIndex:
     .byte 20
 
 charTableStart:
-    .byte $a0, $e3, $f7, $f8, $62, $79, $6f
+    .byte $a0, $e3, $f7, $f8, $62, $79, $6f, $64
 charTableEnd:
 

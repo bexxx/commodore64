@@ -19,7 +19,6 @@
 .const TargetCharsetPointer = Zeropage.Unused_FB        // ZP pointer, used to write to charset data
 .const CurrentChar = Zeropage.Unused_02                 // current char from scroll text
 
-
 .var music = LoadSid("../E Custom Charset/retrospectful.sid")
 
 * = music.location "Music" 
@@ -86,9 +85,9 @@ main:
     sta VIC.CONTR_REG
 
     // initialize scroll text buffer with first 39 characters
-    ldx #39
-!:  lda scrollText,x
-    sta scrollTextBuffer,x
+    ldx #ScrollerWidth - 1
+    lda #' '
+!:  sta scrollTextBuffer,x
     dex
     bpl !-
 
@@ -289,7 +288,7 @@ scrollOneCharacter:
     
 .label scrollTextPointerLo = *+1
 .label scrollTextPointerHi = *+2
-!:  lda scrollText+ScrollerWidth
+!:  lda scrollText
     bne !+
     lda #<scrollText
     sta scrollTextPointerLo
@@ -465,6 +464,7 @@ setupSprites:
 
 #import "../../includes/common_gfx_functions.asm"
 
+
 currentXScrollOffset:
     .byte $07
 currentSineIndex1:
@@ -473,8 +473,6 @@ currentSineIndex2:
     .byte $04
 framesToWait:
     .byte WaitFrames
-currentScrollTextIndex2:
-    .byte $00
 scrollTextBuffer:
     .fill ScrollerWidth, $0
 scrollText:

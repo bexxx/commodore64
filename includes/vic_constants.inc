@@ -21,6 +21,7 @@
     .label ENABLE_40_COLUMNS_MASK = %00001000
     .label ENABLE_40_COLUMNS_CLEAR_MASK = ~ENABLE_40_COLUMNS_MASK
     .label ENABLE_MULTICOLOR_MASK = %00010000
+    .label ENABLE_MULTICOLOR_CLEAR_MASK = ~ENABLE_MULTICOLOR_MASK
 
     .label CURRENT_RASTERLINE_REG = $d012
 
@@ -53,6 +54,7 @@
     .label SPRITE_5_ENABLE_MASK = %00100000
     .label SPRITE_6_ENABLE_MASK = %01000000
     .label SPRITE_7_ENABLE_MASK = %10000000
+    .label SPRITE_ALL_ENABLE_MASK = %11111111
 
     // address holding pointer info to graphics area
     .label GRAPHICS_POINTER = $d018
@@ -148,7 +150,8 @@
     .label blue_mc = blue + 8
     .label yellow_mc = yellow + 8
 
-    .label BITMAP_MODE = %00100000
+    .label ENABLE_BITMAP_MODE_MASK = %1 << 5
+    .label ENABLE_BITMAP_MODE_CLEAR_MASK = ~ENABLE_BITMAP_MODE_MASK
 
     .label SELECT_SCREENBUFFER_AT_0000_MASK = %0000 << 4 // start at $0000
     .label SELECT_SCREENBUFFER_AT_0400_MASK = %0001 << 4 // start at $0400	
@@ -177,6 +180,10 @@
     .label SELECT_CHARSET_AT_3000_MASK = %1100 // start at $3000	
     .label SELECT_CHARSET_AT_3800_MASK = %1110 // start at $3800	
     .label SELECT_CHARSET_CLEAR_MASK = ~%00001111 // select screenbuffer with bits 3-0, 0 unused in textmode
+
+    .label SELECT_BITMAP_AT_0000_MASK = %0 << 3 // start at $0000
+    .label SELECT_BITMAP_AT_2000_MASK = %1 << 3 // start at $0800
+    .label SELECT_BITMAP_CLEAR_MASK = ~(%1 << 3)
 
     .label ColorRamBase = $d800
 }

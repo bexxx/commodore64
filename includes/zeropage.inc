@@ -18,6 +18,8 @@
     .label ENABLE_LORAM_MASK = ~%00000001
     .label ENABLE_HIRAM_MASK = ~%00000010
 
+    .const PLACONFIG = %00110101 // LoRam off, HiRam on, char off
+
     .label Unused_02 = $02
     .label Unused_FB = $FB
     .label Unused_FC = $FC
