@@ -1,4 +1,4 @@
-# Moonshine 2nd anniversary music collection
+# Perigeum, the release formerly known as "Moonshine 2nd anniversary music collection" ;)
 
 In this project I learned that doing effects individually is much simpler than doing stuff together. This is really a whole different beast.
 Released at [BCC#18](https://csdb.dk/event/?id=3364), [release here](https://csdb.dk/release/?id=239936).
