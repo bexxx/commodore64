@@ -2,8 +2,7 @@ import sys
  
 file = open(sys.argv[1], "rb")
 
-
-data = file.read(2)
+#data = file.read(2)
 
 data = file.read(16)
 
