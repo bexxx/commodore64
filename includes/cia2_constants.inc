@@ -8,6 +8,9 @@
     .label VIC_SELECT_BANK0_MASK = %00000011 // 3: Bank 0: $0000-$3FFF, 0-16383 (Standard)
 
     .label VIC_SELECT_BANK_CLEAR_MASK = ~%11 // bits 1-0 for bank selection
+
+    .label INTERRUPT_CONTROL_REG = $dd0d
+    .label CLEAR_ALL_INTERRUPT_SOURCES = %01111111
 }
 
 .macro SelectVicMemoryBank(BankMask) {
