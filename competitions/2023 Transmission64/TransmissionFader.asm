@@ -43,9 +43,9 @@ init:
 
 setDefaultColors:
     // set border, screen and char colors to default ones
-    lda #VIC.blue
+    lda #BLUE
     sta VIC.SCREEN_COLOR
-    lda #VIC.lblue
+    lda #LIGHT_BLUE
     sta VIC.BORDER_COLOR
     jsr setColorRamToSingleColor   
     rts
@@ -169,7 +169,7 @@ drawLinesToSide:
     // overwrite the last white columns on the two sides. 
     // just two rows would be enough, but we already have this function
     // and enough time
-    lda #VIC.lblue
+    lda #LIGHT_BLUE
     jsr setColorRamToSingleColor   
 
     rts
@@ -183,11 +183,11 @@ drawOneColumn:
         sta ScreenBufferStart + row * 40,x
     }
     
-    lda #VIC.white
+    lda #WHITE
     .for (var row=0; row < 25; row++) {
         sta VIC.ColorRamBase + row * 40 + 0,x
     }
-    lda #VIC.lblue
+    lda #LIGHT_BLUE
     .for (var row=0; row < 25; row++) {
         sta VIC.ColorRamBase + row * 40 + 1,x
     }
@@ -198,11 +198,11 @@ drawOneColumn:
     .for (var row=0; row < 25; row++) {
         sta ScreenBufferStart + row * 40,x
     }
-    lda #VIC.white
+    lda #WHITE
     .for (var row=0; row < 25; row++) {
         sta VIC.ColorRamBase + row * 40 - 0,x
     }  
-    lda #VIC.lblue
+    lda #LIGHT_BLUE
     .for (var row=0; row < 25; row++) {
         sta VIC.ColorRamBase + row * 40 - 1,x
     }   
@@ -328,9 +328,9 @@ doneFadingToBlack:
     rts
 
 fadeColors:
-    .byte VIC.dgrey, VIC.purple, VIC.lblue, VIC.green, VIC.cyan, VIC.lgreen
-    .byte VIC.white, VIC.yellow, VIC.lgrey, VIC.lred, VIC.grey, VIC.orange
-    .byte VIC.red, VIC.brown, VIC.black, VIC.black | $f0
+    .byte DARK_GREY, VIC.purple, LIGHT_BLUE, GREEN, CYAN, LIGHT_GREEN
+    .byte WHITE, YELLOW, LIGHT_GREY, LIGHT_RED, GREY, ORANGE
+    .byte RED, BROWN, BLACK, BLACK | $f0
 
 .segment Default "Functions"
 

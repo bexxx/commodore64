@@ -145,7 +145,7 @@ main:
     jsr setupKoalaColors
     jsr setupBackgroundColors
 
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
     sta VIC.SCREEN_COLOR
 
@@ -241,7 +241,7 @@ waitForever:
     jmp waitForever
 
 fadeouttable:
-    .byte VIC.black, VIC.lgreen, VIC.dgrey, VIC.green, VIC.red, VIC.lred, VIC.brown, VIC.lgrey, VIC.purple, VIC.black, VIC.grey, VIC.blue, VIC.lblue, VIC.yellow, VIC.orange, VIC.cyan
+    .byte BLACK, LIGHT_GREEN, DARK_GREY, GREEN, RED, LIGHT_RED, BROWN, LIGHT_GREY, PURPLE, BLACK, GREY, BLUE, LIGHT_BLUE, YELLOW, ORANGE, CYAN
 
 irqWidescreenBar:
     lda #<irqBitmap                             // low byte of our raster interrupt handler
@@ -251,7 +251,7 @@ irqWidescreenBar:
 
     lda #BitmapConfiguration.RasterInterruptLine// load desired raster line
     nop
-    ldx #VIC.dgrey
+    ldx #DARK_GREY
     stx VIC.BORDER_COLOR
     sta VIC.CURRENT_RASTERLINE_REG              // low byte of raster line
 
@@ -266,7 +266,7 @@ irqBitmap:
     lda VIC.GRAPHICS_POINTER
     and #VIC.SELECT_SCREENBUFFER_CLEAR_MASK
     and #VIC.SELECT_BITMAP_CLEAR_MASK
-    ldx #VIC.black
+    ldx #BLACK
     stx VIC.BORDER_COLOR
     ora #VIC.SELECT_SCREENBUFFER_AT_0000_MASK
     ora #VIC.SELECT_BITMAP_AT_2000_MASK
@@ -585,7 +585,7 @@ clearCharset2:
     rts
 
 setupBackgroundColors:
-    lda #VIC.white
+    lda #WHITE
     ldx #$0
 !:  sta $da00,x
     sta $db00,x
@@ -593,20 +593,20 @@ setupBackgroundColors:
     bne !-
 
     .for (var i=14;i<25;i++) {
-        lda #VIC.dgrey
+        lda #DARK_GREY
         sta $d800+0+i*40
-        lda #VIC.grey
+        lda #GREY
         sta $d800+1+i*40
-        lda #VIC.lgrey
+        lda #LIGHT_GREY
         sta $d800+2+i*40
     }
 
     .for (var i=14;i<25;i++) {
-        lda #VIC.lgrey
+        lda #LIGHT_GREY
         sta $d800+36+i*40
-        lda #VIC.grey
+        lda #GREY
         sta $d800+37+i*40
-        lda #VIC.dgrey
+        lda #DARK_GREY
         sta $d800+38+i*40
     }
     rts

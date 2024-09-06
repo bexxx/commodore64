@@ -108,8 +108,8 @@ secondRasterInterrupt: {
     nop                                         // (2 cycles)
     bit $01                                     // (3 cycles) modifies flags, but we need an odd cycle count
     ldx VIC.CURRENT_RASTERLINE_REG              // (4 cycles) granted that we are still on raster + 2
-    lda #VIC.lred                               // (2 cycles) already load color, do something useful
-    ldy #VIC.black                              //(2 TZ) 'Zeilenfarbe' schwarz ins Y-Reg. laden
+    lda #LIGHT_RED                              // (2 cycles) already load color, do something useful
+    ldy #BLACK                                  // (2 cycles) 'Zeilenfarbe' schwarz ins Y-Reg. laden
     cpx VIC.CURRENT_RASTERLINE_REG              // (4 cycles) still on raster line start + 2?
                                                 // total:
                                                 // 25 cycles, here we are either on cycles 63 or 64
@@ -192,12 +192,12 @@ exit:
 
 .align $100
 colors:
-    .byte VIC.blue, VIC.black, VIC.lblue, VIC.blue, VIC.black, VIC.cyan, VIC.lgrey, VIC.lblue
-    .byte VIC.black, VIC.lgreen, VIC.cyan, VIC.cyan, VIC.lgrey, VIC.black, VIC.yellow, VIC.lgreen
-    .byte VIC.lgreen, VIC.lgreen, VIC.cyan, VIC.black, VIC.white, VIC.yellow, VIC.yellow, VIC.yellow
-    .byte VIC.yellow, VIC.lgreen, VIC.black, VIC.yellow, VIC.white, VIC.white, VIC.white, VIC.white
-    .byte VIC.white, VIC.white, VIC.white, VIC.black, VIC.white, VIC.yellow, VIC.yellow, VIC.yellow
-    .byte VIC.yellow, VIC.lgreen, VIC.black, VIC.yellow, VIC.lgreen, VIC.lgreen, VIC.lgreen, VIC.cyan
-    .byte VIC.black, VIC.lgreen, VIC.cyan, VIC.cyan, VIC.lgrey, VIC.black, VIC.cyan, VIC.lgrey
-    .byte VIC.lblue, VIC.black, VIC.lblue, VIC.blue, VIC.black, VIC.blue
+    .byte BLUE, BLACK, LIGHT_BLUE, BLUE, BLACK, CYAN, LIGHT_GREY, LIGHT_BLUE
+    .byte BLACK, LIGHT_GREEN, CYAN, CYAN, LIGHT_GREY, BLACK, YELLOW, LIGHT_GREEN
+    .byte LIGHT_GREEN, LIGHT_GREEN, CYAN, BLACK, WHITE, YELLOW, YELLOW, YELLOW
+    .byte YELLOW, LIGHT_GREEN, BLACK, YELLOW, WHITE, WHITE, WHITE, WHITE
+    .byte WHITE, WHITE, WHITE, BLACK, WHITE, YELLOW, YELLOW, YELLOW
+    .byte YELLOW, LIGHT_GREEN, BLACK, YELLOW, LIGHT_GREEN, LIGHT_GREEN, LIGHT_GREEN, CYAN
+    .byte BLACK, LIGHT_GREEN, CYAN, CYAN, LIGHT_GREY, BLACK, CYAN, LIGHT_GREY
+    .byte LIGHT_BLUE, BLACK, LIGHT_BLUE, BLUE, BLACK, BLUE
     .byte $f0

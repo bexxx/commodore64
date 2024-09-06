@@ -40,7 +40,7 @@ main:
     jsr clearScreen1
     jsr clearScreen2
 
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
     sta VIC.SCREEN_COLOR
 
@@ -341,7 +341,7 @@ clearCharset2:
     rts
 
 setupBackgroundColors:
-    lda #VIC.white
+    lda #WHITE
     ldx #$0
 !:  sta $d800,x
     sta $d900,x
@@ -351,31 +351,31 @@ setupBackgroundColors:
     bne !-
 
     .for (var i=0;i<25;i++) {
-        lda #VIC.dgrey
+        lda #DARK_GREY
         sta $d800+0+i*40
-        lda #VIC.grey
+        lda #GREY
         sta $d800+1+i*40
-        lda #VIC.lgrey
+        lda #LIGHT_GREY
         sta $d800+2+i*40
     }
 
     .for (var i=0;i<25;i++) {
-        lda #VIC.lgrey
+        lda #LIGHT_GREY
         sta $d800+36+i*40
-        lda #VIC.grey
+        lda #GREY
         sta $d800+37+i*40
-        lda #VIC.dgrey
+        lda #DARK_GREY
         sta $d800+38+i*40
     }
     rts
 
 setupSprites:
-    lda #VIC.black
+    lda #BLACK
     sta VIC.SPRITE_MULTICOLOR_1
-    lda #VIC.grey
+    lda #GREY
     sta VIC.SPRITE_MULTICOLOR_2
 
-    lda #VIC.lgrey
+    lda #LIGHT_GREY
     sta VIC.SPRITE_MULTICOLOR_3_0
     sta VIC.SPRITE_MULTICOLOR_3_1
     sta VIC.SPRITE_MULTICOLOR_3_2

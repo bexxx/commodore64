@@ -267,14 +267,14 @@ noIndexReset:
 .align $100
 .segment Default "color definition"
 Colors:
-    .byte VIC.blue, VIC.black, VIC.lblue, VIC.blue, VIC.black, VIC.cyan, VIC.lgrey, VIC.lblue
-    .byte VIC.black, VIC.lgreen, VIC.cyan, VIC.cyan, VIC.lgrey, VIC.black, VIC.yellow, VIC.lgreen
-    .byte VIC.lgreen, VIC.lgreen, VIC.cyan, VIC.black, VIC.white, VIC.yellow, VIC.yellow, VIC.yellow
-    .byte VIC.yellow, VIC.lgreen, VIC.black, VIC.yellow, VIC.white, VIC.white, VIC.white, VIC.white
-    .byte VIC.white, VIC.white, VIC.white, VIC.black, VIC.white, VIC.yellow, VIC.yellow, VIC.yellow
-    .byte VIC.yellow, VIC.lgreen, VIC.black, VIC.yellow, VIC.lgreen, VIC.lgreen, VIC.lgreen, VIC.cyan
-    .byte VIC.black, VIC.lgreen, VIC.cyan, VIC.cyan, VIC.lgrey, VIC.black, VIC.cyan, VIC.lgrey
-    .byte VIC.lblue, VIC.black, VIC.lblue, VIC.blue, VIC.black, VIC.blue
+    .byte BLUE, BLACK, LIGHT_BLUE, BLUE, BLACK, CYAN, LIGHT_GREY, LIGHT_BLUE
+    .byte BLACK, LIGHT_GREEN, CYAN, CYAN, LIGHT_GREY, BLACK, YELLOW, LIGHT_GREEN
+    .byte LIGHT_GREEN, LIGHT_GREEN, CYAN, BLACK, WHITE, YELLOW, YELLOW, YELLOW
+    .byte YELLOW, LIGHT_GREEN, BLACK, YELLOW, WHITE, WHITE, WHITE, WHITE
+    .byte WHITE, WHITE, WHITE, BLACK, WHITE, YELLOW, YELLOW, YELLOW
+    .byte YELLOW, LIGHT_GREEN, BLACK, YELLOW, LIGHT_GREEN, LIGHT_GREEN, LIGHT_GREEN, CYAN
+    .byte BLACK, LIGHT_GREEN, CYAN, CYAN, LIGHT_GREY, BLACK, CYAN, LIGHT_GREY
+    .byte LIGHT_BLUE, BLACK, LIGHT_BLUE, BLUE, BLACK, BLUE
     .byte $f0
 ColorsEnd:
 

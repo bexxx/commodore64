@@ -104,8 +104,8 @@ secondRasterInterrupt: {
     nop                                         // (2 cycles)
     bit $01                                     // (3 cycles) modifies flags, but we need an odd cycle count
     ldx VIC.CURRENT_RASTERLINE_REG              // (4 cycles) granted that we are still on raster + 2
-    lda #VIC.grey                               // (2 cycles) already load color, do something useful
-    ldy #VIC.black                              // (2 cycles) load color to y reg
+    lda #GREY                                   // (2 cycles) already load color, do something useful
+    ldy #BLACK                                  // (2 cycles) load color to y reg
     cpx VIC.CURRENT_RASTERLINE_REG              // (4 cycles) still on raster line start + 2?
                                                 // total:
                                                 // 25 cycles, here we are either on cycles 63 or 64

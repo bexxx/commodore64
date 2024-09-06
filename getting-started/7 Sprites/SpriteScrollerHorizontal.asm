@@ -248,16 +248,16 @@ setup:
     jsr music.init
 
     // set border and background colors
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
     sta VIC.SCREEN_COLOR
     
     // set sprite colors
-    ldx #VIC.lblue
+    ldx #LIGHT_BLUE
     stx VIC.SPRITE_MULTICOLOR_1
-    ldx #VIC.blue
+    ldx #BLUE
     stx VIC.SPRITE_MULTICOLOR_2
-    ldx #VIC.cyan
+    ldx #CYAN
     stx VIC.SPRITE_MULTICOLOR_3_0
     stx VIC.SPRITE_MULTICOLOR_3_1
     stx VIC.SPRITE_MULTICOLOR_3_2

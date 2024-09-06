@@ -17,13 +17,13 @@ main:
     sei
 
     // set border and background color to black
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
     sta VIC.SCREEN_COLOR
 
-    lda #VIC.blue
+    lda #BLUE
     sta VIC.TXT_COLOUR_1
-    lda #VIC.lblue
+    lda #LIGHT_BLUE
     sta VIC.TXT_COLOUR_2
 
     //jsr drawAlphabetOnFirstColumn             // to see which lines move around
@@ -391,7 +391,7 @@ enableCoverSprites:
     sta VIC.SPRITE_0_Y
     adc #42
     sta VIC.SPRITE_1_Y
-    lda #VIC.black
+    lda #BLACK
     sta VIC.SPRITE_MULTICOLOR_3_0
     sta VIC.SPRITE_MULTICOLOR_3_1
     lda #%00000011                              // stretch cover sprites in X and Y direction
@@ -431,7 +431,7 @@ exit:
 
 fillColorRam:
     ldx #$00
-    lda #VIC.cyan_mc
+    lda #CYAN_mc
 !:  sta $d800,x
     sta $d900,x
     inx

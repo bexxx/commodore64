@@ -26,11 +26,11 @@ init:
                                 // Bit 6 - Undefined
                                 // Bit 7 - Undefined
 
-    ldx #VIC.lblue
+    ldx #LIGHT_BLUE
     stx VIC.SPRITE_MULTICOLOR_1
-    ldx #VIC.blue
+    ldx #BLUE
     stx VIC.SPRITE_MULTICOLOR_2
-    ldx #VIC.cyan
+    ldx #CYAN
     stx VIC.SPRITE_MULTICOLOR_3_0
 
     // enable all sprites

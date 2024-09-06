@@ -33,7 +33,7 @@ main:
     lda #%00000111
     sta VIC.SPRITE_MSB_X
 
-    lda #VIC.white
+    lda #WHITE
     sta VIC.SPRITE_SOLID_0
     sta VIC.SPRITE_SOLID_1
     sta VIC.SPRITE_SOLID_2

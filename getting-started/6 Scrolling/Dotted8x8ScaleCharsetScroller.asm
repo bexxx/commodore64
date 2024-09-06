@@ -21,7 +21,7 @@ main:
     sei
 
     // clear screen and set background and border to black
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
     sta VIC.SCREEN_COLOR
     jsr Kernel.ClearScreen
@@ -171,7 +171,7 @@ fillScrollerBackgroundWithChars: {
     sta screenStartPointer + 8 * 40,x
 
     // write background colors of dot matrix into color ram
-    lda #VIC.brown
+    lda #BROWN
     sta scrollStartPointer + 0 * 40,x
     sta scrollStartPointer + 1 * 40,x    
     sta scrollStartPointer + 2 * 40,x    
@@ -180,7 +180,7 @@ fillScrollerBackgroundWithChars: {
     sta scrollStartPointer + 5 * 40,x    
     sta scrollStartPointer + 6 * 40,x
     sta scrollStartPointer + 7 * 40,x
-    lda #VIC.dgrey
+    lda #DARK_GREY
     sta scrollStartPointer - 1 * 40,x 
     sta scrollStartPointer + 8 * 40,x
 
@@ -194,10 +194,10 @@ fillScrollerBackgroundWithChars: {
 insertColumnFromBitmap: {
     ldx #0
 columnLoop:
-    lda #VIC.brown     // color when 0
+    lda #BROWN     // color when 0
     asl currentCharacterBitmapBuffer,x
     bcc !+
-    lda #VIC.white     // color when 1
+    lda #WHITE     // color when 1
 .label destinationAddressLo = * + 1
 .label destinationAddressHi = * + 2
 !:  sta scrollStartPointer + 0 * 40 + 39

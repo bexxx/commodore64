@@ -122,33 +122,15 @@
     .label INTERRUPT_ENABLE = $d01a
     .label ENABLE_RASTER_INTERRUPT_MASK = %1 // Bit 0
 
-    // C64 Colour Codes 
-    .label black = $0
-    .label white = $1
-    .label red = $2
-    .label cyan = $3
-    .label purple  = $4
-    .label green = $5
-    .label blue = $6
-    .label yellow = $7
-    .label orange = $8
-    .label brown = $9
-    .label lred = $a
-    .label dgrey = $b
-    .label grey = $c
-    .label lgreen = $d
-    .label lblue = $e
-    .label lgrey = $f
-
     // First 8 C64 Colors in multicolor mode
-    .label black_mc = black + 8
-    .label white_mc = white + 8
-    .label red_mc = red + 8
-    .label cyan_mc = cyan + 8
-    .label purple_mc  = purple + 8
-    .label green_mc = green + 8
-    .label blue_mc = blue + 8
-    .label yellow_mc = yellow + 8
+    .label black_mc = BLACK + 8
+    .label white_mc = WHITE + 8
+    .label red_mc = RED + 8
+    .label cyan_mc = CYAN + 8
+    .label purple_mc  = PURPLE + 8
+    .label green_mc = GREEN + 8
+    .label blue_mc = BLUE + 8
+    .label yellow_mc = YELLOW + 8
 
     .label ENABLE_BITMAP_MODE_MASK = %1 << 5
     .label ENABLE_BITMAP_MODE_CLEAR_MASK = ~ENABLE_BITMAP_MODE_MASK

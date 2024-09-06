@@ -46,7 +46,7 @@ waitForever:
 .segment Default "raster interrupt"             // shows the bytes for this code, when using -showmem
 
 topInterruptHandler:
-    lda #VIC.blue                               // start with a blue top on line 1
+    lda #BLUE                               // start with a blue top on line 1
     sta VIC.BORDER_COLOR
 
     // when this code is started, 38-45 cycles already passed
@@ -139,8 +139,8 @@ secondRasterInterrupt: {
     nop                                         // (2 cycles)
     bit $01                                     // (3 cycles) modifies flags, but we need an odd cycle count
     ldx VIC.CURRENT_RASTERLINE_REG              // (4 cycles) granted that we are still on raster + 2
-    lda #VIC.lred                               // (2 cycles)
-    ldy #VIC.black                              // (2 cycles)
+    lda #LIGHT_RED                               // (2 cycles)
+    ldy #BLACK                              // (2 cycles)
     cpx VIC.CURRENT_RASTERLINE_REG              // (4 cycles) still on raster line start + 2?
                                                 // total:
                                                 // 25 cycles, here we are either on cycles 63 or 64
@@ -225,8 +225,8 @@ exit:
 
 .align $100
 colors:
-    .byte VIC.cyan, VIC.cyan, VIC.blue, VIC.blue, VIC.blue
-    .byte VIC.orange| $f0
+    .byte CYAN, CYAN, BLUE, BLUE, BLUE
+    .byte ORANGE| $f0
  
 drawGraphics:
 	// set to 25 line text mode and turn on the screen
@@ -238,7 +238,7 @@ drawGraphics:
 	sta $0291
 
 	// set background color
-	lda #VIC.blue
+	lda #BLUE
 	sta VIC.SCREEN_COLOR
 
     ldx #$00

@@ -105,7 +105,7 @@ secondRasterInterrupt: {
     nop                                         // (2 cycles)
     bit $01                                     // (3 cycles) modifies flags, but we need an odd cycle count
     ldx VIC.CURRENT_RASTERLINE_REG              // (4 cycles) granted that we are still on raster + 2
-    lda #VIC.white                              // (2 cycles) already load color, do something useful
+    lda #WHITE                              // (2 cycles) already load color, do something useful
 
     cpx VIC.CURRENT_RASTERLINE_REG              // (4 cycles) still on raster line start + 2?
                                                 // total:
@@ -129,7 +129,7 @@ finalRasterInterruptStart:
     nop                                         //                  2 cycles
     nop                                         //                  2 cycles
     nop                                         //                  2 cycles
-    lda #VIC.lblue                              //                  2 cycles 
+    lda #LIGHT_BLUE                              //                  2 cycles 
     sta VIC.BORDER_COLOR                        //                  4 cycles
                                                 // total
                                                 //                 63 cycles

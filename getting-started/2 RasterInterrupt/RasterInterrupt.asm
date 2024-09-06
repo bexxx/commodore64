@@ -37,7 +37,7 @@ interruptHandlerStart:
     jmp Internals.InterruptHandlerPointer       // call system interrupt handler
  
 rasterInterruptHandler:
-    lda #VIC.white
+    lda #WHITE
     sta VIC.BORDER_COLOR                        // set border to white
 
 waitForEndRasterLine:
@@ -45,7 +45,7 @@ waitForEndRasterLine:
     cmp #RasterInterruptLineEnd                 // is already end raster line?
     bne waitForEndRasterLine                    // nope. high bit not checked, end raster < 256 
 
-    lda #VIC.lblue
+    lda #LIGHT_BLUE
     sta VIC.BORDER_COLOR                        // set border back to light blue
 
     lda #VIC.ENABLE_RASTER_INTERRUPT_MASK       // load mask with bit for raster irq

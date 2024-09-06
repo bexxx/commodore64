@@ -11,7 +11,7 @@ main:
 			sei
 			jsr $ff81 // Clear the screen
 			
-            lda #VIC.black
+            lda #BLACK
 			sta VIC.BORDER_COLOR
 			sta VIC.SCREEN_COLOR
 

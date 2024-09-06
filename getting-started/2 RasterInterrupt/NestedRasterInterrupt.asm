@@ -38,7 +38,7 @@ waitForever:
 
 interruptHandlerStart:
     // indicate start of outer irq with white
-    lda #VIC.white
+    lda #WHITE
     sta VIC.BORDER_COLOR                       
     sta VIC.SCREEN_COLOR
 
@@ -70,7 +70,7 @@ waitForEndRasterLine:
     ReturnFromInterrupt()                       // leave interrupt handler
 
 interruptHandlerNestedStart: {
-    lda #VIC.red
+    lda #RED
     sta VIC.BORDER_COLOR 
     sta VIC.SCREEN_COLOR 
 
@@ -82,7 +82,7 @@ interruptHandlerNestedStart: {
     lda #RasterInterruptLine                    // load desired raster line
     sta VIC.CURRENT_RASTERLINE_REG              // low byte of raster line
 
-    lda #VIC.blue
+    lda #BLUE
     sta VIC.BORDER_COLOR
     sta VIC.SCREEN_COLOR 
 

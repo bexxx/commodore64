@@ -227,25 +227,25 @@ borderBottom:
 .align $100
 .segment Default "color cycle"
 colorCycle:
-.byte VIC.brown, VIC.brown, VIC.orange, VIC.orange,VIC.lred, VIC.lred,VIC.yellow, VIC.yellow,VIC.white
-.byte VIC.yellow, VIC.yellow,VIC.lred, VIC.lred,VIC.orange, VIC.orange,VIC.brown, VIC.brown
+.byte BROWN, BROWN, ORANGE, ORANGE,LIGHT_RED, LIGHT_RED,YELLOW, YELLOW,WHITE
+.byte YELLOW, YELLOW,LIGHT_RED, LIGHT_RED,ORANGE, ORANGE,BROWN, BROWN
 .byte $f0 
 
 colorFlash:
-.byte VIC.dgrey,VIC.dgrey,VIC.dgrey,VIC.dgrey,VIC.dgrey 
-.byte VIC.dgrey,VIC.dgrey,VIC.dgrey,VIC.dgrey,VIC.dgrey 
-.byte VIC.dgrey,VIC.dgrey,VIC.dgrey,VIC.dgrey,VIC.dgrey 
-.byte VIC.grey, VIC.grey, VIC.grey, VIC.grey, VIC.grey
-.byte VIC.grey, VIC.grey, VIC.grey, VIC.grey, VIC.grey
-.byte VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey
-.byte VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey
-.byte VIC.yellow, VIC.white, VIC.white, VIC.white, VIC.white 
-.byte VIC.yellow, VIC.white, VIC.white, VIC.white, VIC.white 
-.byte VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey
-.byte VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey, VIC.lgrey
-.byte VIC.grey, VIC.grey, VIC.grey, VIC.grey, VIC.grey
-.byte VIC.grey, VIC.grey, VIC.grey, VIC.grey, VIC.grey
-.byte VIC.grey, VIC.grey, VIC.grey, VIC.grey, VIC.grey
+.byte DARK_GREY,DARK_GREY,DARK_GREY,DARK_GREY,DARK_GREY 
+.byte DARK_GREY,DARK_GREY,DARK_GREY,DARK_GREY,DARK_GREY 
+.byte DARK_GREY,DARK_GREY,DARK_GREY,DARK_GREY,DARK_GREY 
+.byte GREY, GREY, GREY, GREY, GREY
+.byte GREY, GREY, GREY, GREY, GREY
+.byte LIGHT_GREY, LIGHT_GREY, LIGHT_GREY, LIGHT_GREY, LIGHT_GREY
+.byte LIGHT_GREY, LIGHT_GREY, LIGHT_GREY, LIGHT_GREY, LIGHT_GREY
+.byte YELLOW, WHITE, WHITE, WHITE, WHITE 
+.byte YELLOW, WHITE, WHITE, WHITE, WHITE 
+.byte LIGHT_GREY, LIGHT_GREY, LIGHT_GREY, LIGHT_GREY, LIGHT_GREY
+.byte LIGHT_GREY, LIGHT_GREY, LIGHT_GREY, LIGHT_GREY, LIGHT_GREY
+.byte GREY, GREY, GREY, GREY, GREY
+.byte GREY, GREY, GREY, GREY, GREY
+.byte GREY, GREY, GREY, GREY, GREY
 
 
 

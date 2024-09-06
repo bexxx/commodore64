@@ -20,17 +20,17 @@ main:
 	lda #music.startSong - 1
     jsr music.init
 
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
     sta VIC.SCREEN_COLOR
 
-    lda #VIC.blue
+    lda #BLUE
     sta VIC.TXT_COLOUR_1
-    lda #VIC.lblue
+    lda #LIGHT_BLUE
     sta VIC.TXT_COLOUR_2
 
     ldx #$00
-    lda #VIC.cyan_mc
+    lda #CYAN_mc
 !:  sta $d800,x
     sta $d900,x
     inx
