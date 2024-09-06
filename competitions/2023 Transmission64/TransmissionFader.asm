@@ -328,7 +328,7 @@ doneFadingToBlack:
     rts
 
 fadeColors:
-    .byte DARK_GREY, VIC.purple, LIGHT_BLUE, GREEN, CYAN, LIGHT_GREEN
+    .byte DARK_GREY, PURPLE, LIGHT_BLUE, GREEN, CYAN, LIGHT_GREEN
     .byte WHITE, YELLOW, LIGHT_GREY, LIGHT_RED, GREY, ORANGE
     .byte RED, BROWN, BLACK, BLACK | $f0
 

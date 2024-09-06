@@ -133,7 +133,7 @@ main:
     bne !-
 
     // init color ram with black on first rows for headline
-    lda #VIC.black
+    lda #BLACK
     ldx #0
 !:  
     .for(var i = 0; i < 4; i++)
@@ -144,7 +144,7 @@ main:
     bne !-
 
     ldx #2*40        
-!:  lda #VIC.white
+!:  lda #WHITE
     sta $d800 + 23*40,x
     lda #(' ' * 4)
     sta Configuration.ScreenRamStart + 23*40,x
@@ -167,11 +167,11 @@ main:
     lda #%10011110          // VIC.SELECT_SCREENBUFFER_AT_2400_MASK, VIC.SELECT_CHARSET_AT_3800_MASK
     sta VIC.GRAPHICS_POINTER
     
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
     sta VIC.SCREEN_COLOR
 
-    lda #VIC.white
+    lda #WHITE
     sta currentScrolltextColor
 
     jsr generateShiftedBarBytes
@@ -188,14 +188,14 @@ main:
     ldx #$0
     stx VIC.SPRITE_HIRES
 
-    lda #VIC.red
+    lda #RED
     sta VIC.SPRITE_SOLID_0
     sta VIC.SPRITE_SOLID_1
     sta VIC.SPRITE_SOLID_2
     sta VIC.SPRITE_SOLID_3
     sta VIC.SPRITE_SOLID_4
     sta VIC.SPRITE_SOLID_5
-    lda #VIC.white
+    lda #WHITE
     sta VIC.SPRITE_SOLID_6
     sta VIC.SPRITE_SOLID_7
 
@@ -400,7 +400,6 @@ generateZoomedColorRamData: {
 .align $100
 .segment Default "Raster IRQ music"
 interruptMusic: {
-    sei
     pha        //store register A in stack
     txa
     pha        //store register X in stack
@@ -408,7 +407,7 @@ interruptMusic: {
     pha        //store register Y in stack
 
 #if TIMING
-    lda #VIC.green
+    lda #GREEN
     sta VIC.BORDER_COLOR
 #endif
 
@@ -419,7 +418,7 @@ interruptMusic: {
     jsr music.play
 !:
 #if TIMING
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
 #endif 
 
@@ -484,8 +483,6 @@ exitMusicInterrupt:
     pla
     tax        //restore register X from stack
     pla        //restore register A from stack
-
-    cli
 
     rti
 }
@@ -552,8 +549,6 @@ mfd_dly:                 lda     #$10
 
 .segment Default "Raster IRQ fadeout"
 interruptFadeout: {
-    sei
-
     pha        //store register A in stack
     txa
     pha        //store register X in stack
@@ -561,7 +556,7 @@ interruptFadeout: {
     pha        //store register Y in stack
 
 #if TIMING
-    lda #VIC.lred
+    lda #LIGHT_RED
     sta VIC.BORDER_COLOR
 #endif 
 
@@ -765,7 +760,7 @@ wtfd_e:
    sta VIC.CURRENT_RASTERLINE_REG           // low byte of raster line
 
 #if TIMING
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
 #endif 
 
@@ -774,14 +769,12 @@ wtfd_e:
     pla
     tax        //restore register X from stack
     pla        //restore register A from stack
-    cli
+
     rti
 }
 
 .segment Default "Raster IRQ motives"
 interruptMotive: {
-    sei
-
     pha        //store register A in stack
     txa
     pha        //store register X in stack
@@ -789,7 +782,7 @@ interruptMotive: {
     pha        //store register Y in stack
 
 #if TIMING
-    lda #VIC.lred
+    lda #LIGHT_RED
     sta VIC.BORDER_COLOR
 #endif 
 
@@ -837,7 +830,7 @@ exitMotiveInterrupt:
    sta VIC.CURRENT_RASTERLINE_REG              // low byte of raster line
 
 #if TIMING
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
 #endif 
 
@@ -846,7 +839,7 @@ exitMotiveInterrupt:
     pla
     tax        //restore register X from stack
     pla        //restore register A from stack
-    cli
+
     rti
 }
 
@@ -872,7 +865,7 @@ interruptBars:
 
 
 #if TIMING
-    lda #VIC.red
+    lda #RED
     sta VIC.BORDER_COLOR
 #endif
 
@@ -880,7 +873,7 @@ interruptBars:
     ldx #$ff
     inx
     stx colorIndex
-    ldy #VIC.black
+    ldy #BLACK
     sty colorValue
 //    lda colors,x
     bpl !+
@@ -972,7 +965,7 @@ exitFromInterrupt:
 thisistheend:
 
 #if TIMING
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
 #endif
 
@@ -1112,11 +1105,11 @@ zoomSingleCharByte:
     bcc pixelNotSet
 
 pixelSet:
-    lda #VIC.lgrey
+    lda #LIGHT_GREY
     bne storePixel
 
 pixelNotSet:  
-    lda #VIC.black
+    lda #BLACK
 
 storePixel:
     sta (Zeropage.Unused_FD),y
@@ -1164,7 +1157,7 @@ interruptScroller:
     pha        //store register Y in stack
 
 #if TIMING
-    lda #VIC.lblue //dec $d020                                   // comment out, leave in to check timing
+    lda #LIGHT_BLUE //dec $d020                                   // comment out, leave in to check timing
     sta VIC.BORDER_COLOR
 #endif 
 
@@ -1188,7 +1181,7 @@ interruptScroller:
     stx VIC.CONTR_REG       
     sta VIC.GRAPHICS_POINTER                       
 #if !TIMING
-    ldy #VIC.black
+    ldy #BLACK
     sty VIC.BORDER_COLOR
     sty VIC.SCREEN_COLOR
 #endif
@@ -1210,7 +1203,7 @@ interruptScroller:
 
 exitFromScrollerInterrupt:
 #if TIMING
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
 #endif
     inc VIC.INTERRUPT_EVENT                     // store back to enable raster interrupt
@@ -1233,7 +1226,6 @@ exitFromScrollerInterrupt:
 
 .segment Default "Raster IRQ headlines"
 interruptHeadLines:
-    sei
     pha        //store register A in stack
     txa
     pha        //store register X in stack
@@ -1241,7 +1233,7 @@ interruptHeadLines:
     pha        //store register Y in stack
 
 #if TIMING
-    lda #VIC.white //dec $d020                                   // comment out, leave in to check timing
+    lda #WHITE //dec $d020                                   // comment out, leave in to check timing
     sta VIC.BORDER_COLOR
 #endif
 
@@ -1351,7 +1343,7 @@ noPageIncrease:
 exit:
 
 #if TIMING
-    lda #VIC.grey
+    lda #GREY
     sta VIC.BORDER_COLOR
 #endif
 
@@ -1446,7 +1438,7 @@ printCharacterSlice:
 
 exitFromHeadlineInterrupt:
 #if TIMING    
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
 #endif 
 
@@ -1472,7 +1464,7 @@ exitFromHeadlineInterrupt:
     pla
     tax        //restore register X from stack
     pla        //restore register A from stack
-    cli
+
     rti
 
 transitionToNextPart:
@@ -1552,7 +1544,7 @@ doneWithFadeIn:
 
 fadeoutMessage:
 .label currentFadeoutIteration = * + 1
-    ldy #VIC.white
+    ldy #WHITE
     bpl continueFadeout
 
     ldx #29
@@ -1564,7 +1556,7 @@ fadeoutMessage:
     bpl !-
 
     ldx #29
-    lda #VIC.black
+    lda #BLACK
 c:  sta $d800+10,x
     sta $d800+40+10,x
     sta $d800+80+10,x
@@ -1611,9 +1603,9 @@ continueFadeout:
 #import "../../../commodore64/includes/common_gfx_functions.asm"
 
 fadeouttable:
-    .byte VIC.black | $80, VIC.lgreen, VIC.dgrey, VIC.green, VIC.red, VIC.lred, VIC.brown
-    .byte VIC.lgrey, VIC.purple, VIC.black, VIC.grey, VIC.blue, VIC.lblue, VIC.yellow
-    .byte VIC.orange, VIC.cyan
+    .byte BLACK | $80, LIGHT_GREEN, DARK_GREY, GREEN, RED, LIGHT_RED, BROWN
+    .byte LIGHT_GREY, PURPLE, BLACK, GREY, BLUE, LIGHT_BLUE, YELLOW
+    .byte ORANGE, CYAN
 
 currentYPosition:
     .byte $0
@@ -1626,7 +1618,7 @@ screenBufferOffsetsHi:
     .fill 5, >(Configuration.ScreenRamStart + i * 40)
 
 fadeInColors:
-    .byte VIC.dgrey, VIC.grey, VIC.white, VIC.lgreen, VIC.lgrey | $80
+    .byte DARK_GREY, GREY, WHITE, LIGHT_GREEN, LIGHT_GREY | $80
 
 .segment Default "News Alert messages"
 newsAlerts:
@@ -1690,44 +1682,44 @@ currentRightmostCharacter:
 currentCharacterSlice:
     .byte $01
 currentScrolltextColor:
-    .byte VIC.white
+    .byte WHITE
 
 .align $100
 .segment Default "scrolltext"
 scrollText:
-.text "  3AD " ; .byte VIC.lgrey | $80 ; .text "("; .byte 35; .text "9.6)"; .byte VIC.white | $80 ;
-.text "  AC " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "8.7)"; .byte VIC.white | $80 ;
-.text "  ATL " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "8.9)"; .byte VIC.white | $80 ;
-.text "  BZ " ; .byte VIC.lgrey | $80 ; .text "("; .byte 35; .text "8.9)"; .byte VIC.white | $80 ;
-.text "  DSR " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "9.0)"; .byte VIC.white | $80 ;
-.text "  EXT " ; .byte VIC.lgrey | $80 ; .text "("; .byte 35; .text "8.3)"; .byte VIC.white | $80 ;
-.text "  F4CG " ; .byte VIC.lred | $80 ; .text "("; .byte 43; .text "9.0)"; .byte VIC.white | $80 ;
-.text "  FCS " ; .byte VIC.lgrey | $80 ; .text "("; .byte 35; .text "9.3)"; .byte VIC.white | $80 ;
-.text "  FF " ; .byte VIC.lred | $80 ; .text "("; .byte 43; .text "0.0)"; .byte VIC.white | $80 ;
-.text "  FIG " ; .byte VIC.lred | $80 ; .text "("; .byte 43; .text "8.8)"; .byte VIC.white | $80 ;
-.text "  FLT " ; .byte VIC.lgrey | $80 ; .text "("; .byte 35; .text "9.6)"; .byte VIC.white | $80 ;
-.text "  FRQ " ; .byte VIC.lred | $80 ; .text "("; .byte 43; .text "0.0)"; .byte VIC.white | $80 ;
-.text "  GP " ; .byte VIC.lred | $80 ; .text "("; .byte 43; .text "8.7)"; .byte VIC.white | $80 ;
-.text "  HJB " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "0.0)"; .byte VIC.white | $80 ;
-.text "  INV " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "0.0)"; .byte VIC.white | $80 ;
-.text "  KRZ " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "0.0)"; .byte VIC.white | $80 ;
-.text "  LSD " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "8.5)"; .byte VIC.white | $80 ;
-.text "  LTH " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "8.9)"; .byte VIC.white | $80 ;
-.text "  LXT " ; .byte VIC.lgrey | $80 ; .text "("; .byte 35; .text "8.4)"; .byte VIC.white | $80 ;
-.text "  MS " ; .byte VIC.lred | $80 ; .text "("; .byte 43; .text "9.7)"; .byte VIC.white | $80 ;
-.text "  MYD " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "9.0)"; .byte VIC.white | $80 ;
-.text "  ONS " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "9.4)"; .byte VIC.white | $80 ;
-.text "  PDA " ; .byte VIC.lgrey | $80 ; .text "("; .byte 35; .text "8.7)"; .byte VIC.white | $80 ;
-.text "  PL " ; .byte VIC.lgrey | $80 ; .text "("; .byte 35; .text "9.1)"; .byte VIC.white | $80 ;
-.text "  RBS " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "0.0)"; .byte VIC.white | $80 ;
-.text "  RSC " ; .byte VIC.lred | $80 ; .text "("; .byte 43; .text "8.9)"; .byte VIC.white | $80 ;
-.text "  SGR " ; .byte VIC.lred | $80 ; .text "("; .byte 43; .text "8.4)"; .byte VIC.white | $80 ;
-.text "  SIDD " ; .byte VIC.lgrey | $80 ; .text "("; .byte 35; .text "10.0)"; .byte VIC.white | $80 ;
-.text "  SMR " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "9.2)"; .byte VIC.white | $80 ;
-.text "  TRSI " ; .byte VIC.green | $80 ; .text "("; .byte 42; .text "9.3)"; .byte VIC.white | $80 ;
-.text "  TRX " ; .byte VIC.lred | $80 ; .text "("; .byte 43; .text "10.0)"; .byte VIC.white | $80 ;
-.text "  TST " ; .byte VIC.lred | $80 ; .text "("; .byte 43; .text "7.4)"; .byte VIC.white | $80 ;
-.text "  VSN " ; .byte VIC.lgrey | $80 ; .text "("; .byte 35; .text "8.7) "; .byte VIC.white | $80 ;
+.text "  3AD " ; .byte LIGHT_GREY | $80 ; .text "("; .byte 35; .text "9.6)"; .byte WHITE | $80 ;
+.text "  AC " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "8.7)"; .byte WHITE | $80 ;
+.text "  ATL " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "8.9)"; .byte WHITE | $80 ;
+.text "  BZ " ; .byte LIGHT_GREY | $80 ; .text "("; .byte 35; .text "8.9)"; .byte WHITE | $80 ;
+.text "  DSR " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "9.0)"; .byte WHITE | $80 ;
+.text "  EXT " ; .byte LIGHT_GREY | $80 ; .text "("; .byte 35; .text "8.3)"; .byte WHITE | $80 ;
+.text "  F4CG " ; .byte LIGHT_RED | $80 ; .text "("; .byte 43; .text "9.0)"; .byte WHITE | $80 ;
+.text "  FCS " ; .byte LIGHT_GREY | $80 ; .text "("; .byte 35; .text "9.3)"; .byte WHITE | $80 ;
+.text "  FF " ; .byte LIGHT_RED | $80 ; .text "("; .byte 43; .text "0.0)"; .byte WHITE | $80 ;
+.text "  FIG " ; .byte LIGHT_RED | $80 ; .text "("; .byte 43; .text "8.8)"; .byte WHITE | $80 ;
+.text "  FLT " ; .byte LIGHT_GREY | $80 ; .text "("; .byte 35; .text "9.6)"; .byte WHITE | $80 ;
+.text "  FRQ " ; .byte LIGHT_RED | $80 ; .text "("; .byte 43; .text "0.0)"; .byte WHITE | $80 ;
+.text "  GP " ; .byte LIGHT_RED | $80 ; .text "("; .byte 43; .text "8.7)"; .byte WHITE | $80 ;
+.text "  HJB " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "0.0)"; .byte WHITE | $80 ;
+.text "  INV " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "0.0)"; .byte WHITE | $80 ;
+.text "  KRZ " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "0.0)"; .byte WHITE | $80 ;
+.text "  LSD " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "8.5)"; .byte WHITE | $80 ;
+.text "  LTH " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "8.9)"; .byte WHITE | $80 ;
+.text "  LXT " ; .byte LIGHT_GREY | $80 ; .text "("; .byte 35; .text "8.4)"; .byte WHITE | $80 ;
+.text "  MS " ; .byte LIGHT_RED | $80 ; .text "("; .byte 43; .text "9.7)"; .byte WHITE | $80 ;
+.text "  MYD " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "9.0)"; .byte WHITE | $80 ;
+.text "  ONS " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "9.4)"; .byte WHITE | $80 ;
+.text "  PDA " ; .byte LIGHT_GREY | $80 ; .text "("; .byte 35; .text "8.7)"; .byte WHITE | $80 ;
+.text "  PL " ; .byte LIGHT_GREY | $80 ; .text "("; .byte 35; .text "9.1)"; .byte WHITE | $80 ;
+.text "  RBS " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "0.0)"; .byte WHITE | $80 ;
+.text "  RSC " ; .byte LIGHT_RED | $80 ; .text "("; .byte 43; .text "8.9)"; .byte WHITE | $80 ;
+.text "  SGR " ; .byte LIGHT_RED | $80 ; .text "("; .byte 43; .text "8.4)"; .byte WHITE | $80 ;
+.text "  SIDD " ; .byte LIGHT_GREY | $80 ; .text "("; .byte 35; .text "10.0)"; .byte WHITE | $80 ;
+.text "  SMR " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "9.2)"; .byte WHITE | $80 ;
+.text "  TRSI " ; .byte GREEN | $80 ; .text "("; .byte 42; .text "9.3)"; .byte WHITE | $80 ;
+.text "  TRX " ; .byte LIGHT_RED | $80 ; .text "("; .byte 43; .text "10.0)"; .byte WHITE | $80 ;
+.text "  TST " ; .byte LIGHT_RED | $80 ; .text "("; .byte 43; .text "7.4)"; .byte WHITE | $80 ;
+.text "  VSN " ; .byte LIGHT_GREY | $80 ; .text "("; .byte 35; .text "8.7) "; .byte WHITE | $80 ;
 .text "                        "
 .byte $00 
 

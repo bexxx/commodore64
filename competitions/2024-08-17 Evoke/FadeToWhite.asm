@@ -37,7 +37,7 @@ main:
     lsr VIC.INTERRUPT_EVENT
     
     BusyWaitForNewScreen()                      // we start with a white screen on top
-    ldx #VIC.white
+    ldx #WHITE
     stx VIC.BORDER_COLOR
 
     cli
@@ -50,7 +50,7 @@ blindsLoop:
     lda rasterIrqLines,x
     tay                                         // save away to have it handy between wait frames
 
-    ldx #VIC.white
+    ldx #WHITE
     BusyWaitForNewScreen()
     stx VIC.BORDER_COLOR
     iny
@@ -184,7 +184,7 @@ noBlindDrawingJustBorder:
 
 exit:                                           // transition to end or next part
     BusyWaitForNewScreen()
-    lda #VIC.white
+    lda #WHITE
     sta VIC.SCREEN_COLOR                        // also set screen color to white
     sta borderColor                             // in case the raster irq still gets executed, let it set border to white again
     lda #$13                                           
@@ -237,34 +237,15 @@ fadeOutLogo:
     rts
 
 interruptBackgroundColor:
-    sei
-
     pha
     txa
     pha
     tya
     pha
 
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
+    .fill 18, NOP
 
-    lda borderColor: #VIC.lblue                 // the border color that was set before demo started
+    lda borderColor: #LIGHT_BLUE                 // the border color that was set before demo started
     sta VIC.BORDER_COLOR                        // set previous border color for border fade down
     lsr VIC.INTERRUPT_EVENT                     // ack raster irq
 
@@ -274,7 +255,6 @@ noRasterInterrupt:
     pla
     tax        
     pla        
-    cli
 
     rti
 

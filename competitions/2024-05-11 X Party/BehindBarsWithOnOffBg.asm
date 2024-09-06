@@ -53,7 +53,7 @@ main:
     dex
     bne !-
 
-    lda #VIC.dgrey
+    lda #DARK_GREY
     ldx #0
 !:  
     .for(var i = 0; i < 4; i++)
@@ -69,7 +69,7 @@ main:
     // switch to new char set
     ConfigureVicMemory(VIC.SELECT_SCREENBUFFER_AT_3000_MASK, VIC.SELECT_CHARSET_AT_2000_MASK)
     
-    lda #VIC.black
+    lda #BLACK
     sta VIC.BORDER_COLOR
     sta VIC.SCREEN_COLOR
 
@@ -129,12 +129,12 @@ interruptBars:
 .label trueFalseValue = * + 1
     lda #$01
     bne doBlackColorRam
-    lda #VIC.dgrey
+    lda #DARK_GREY
     sta zoomerBackgroundColor
     jmp !+
 doBlackColorRam:
 .label iconBackgroundColor = * + 1
-    lda #VIC.black
+    lda #BLACK
     sta zoomerBackgroundColor
 !:
     ldx #40
@@ -447,7 +447,7 @@ zoom8PixelsWideLoop:
     tay
     bcc pixelNotSet
 pixelSet:
-    lda #VIC.lgrey
+    lda #LIGHT_GREY
 .label colorRamTarget1Lo = * + 1
 .label colorRamTarget1Hi = * + 2
     sta $dead,x
@@ -457,7 +457,7 @@ pixelSet:
     jmp doneWithByte
 pixelNotSet:  
 .label zoomerBackgroundColor = * + 1
-    lda #VIC.dgrey
+    lda #DARK_GREY
 .label colorRamTarget2Lo = * + 1
 .label colorRamTarget2Hi = * + 2
     sta $dead,x
@@ -513,11 +513,11 @@ endOfCurrentIteration:
 //    //sta currentShiftedCharsetValue
 //    bcc pixelNotSet
 //pixelSet:
-//    lda #VIC.lgrey
+//    lda #LIGHT_GREY
 //    bne setPixel
 //
 //pixelNotSet:  
-//    lda #VIC.dgrey
+//    lda #DARK_GREY
 //
 //setPixel:
 //.label colorRamTargetLo = * + 1
@@ -599,11 +599,11 @@ bars_end:
 
 .segment Default "flash colors"
 colors: // 11 + 50 = 61
-    .fill 40, VIC.black
-    .byte VIC.lgrey, VIC.white, VIC.white, VIC.white, VIC.lgrey, VIC.lgrey, VIC.grey, VIC.grey, VIC.dgrey
-    .byte VIC.dgrey, VIC.blue
-    .fill 9, VIC.black
-    .byte VIC.black | $80
+    .fill 40, BLACK
+    .byte LIGHT_GREY, WHITE, WHITE, WHITE, LIGHT_GREY, LIGHT_GREY, GREY, GREY, DARK_GREY
+    .byte DARK_GREY, BLUE
+    .fill 9, BLACK
+    .byte BLACK | $80
 colors_end:
 
 .segment Default "stuff"
