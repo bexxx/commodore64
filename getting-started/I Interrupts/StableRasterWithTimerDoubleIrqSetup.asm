@@ -84,8 +84,8 @@ irq1:
     // and additional jitter of 2 or 3 (we know it was a NOP before)
     lsr VIC.INTERRUPT_EVENT                     // 6: 15
     .fill 20, NOP                               // 40: 55, yeah, a loop has less bytes 
-    lda $d012                                   // 4: 59
-    cmp $d012                                   // 4: 63 or 64 (1 on new raster lines)
+    lda VIC.CURRENT_RASTERLINE_REG              // 4: 59
+    cmp VIC.CURRENT_RASTERLINE_REG              // 4: 63 or 64 (1 on new raster lines)
     beq fixcycle                                // 2 or 3, depending on 1 cycle jitter
 
 fixcycle: 
@@ -140,7 +140,7 @@ irqStableDemo:
     // just changing border color to see the stable change on the beginning of next raster line
     stx VIC.BORDER_COLOR 
     .fill 5, NOP
-    ldx #VIC.lblue
+    ldx #LIGHT_BLUE
     stx VIC.BORDER_COLOR
     
     ldy Configuration.Irq1YRegZpLocation
