@@ -168,6 +168,8 @@
     .label SELECT_BITMAP_CLEAR_MASK = ~(%1 << 3)
 
     .label ColorRamBase = $d800
+
+    .label firstVisibleRasterLine = $32
 }
 
 .macro ConfigureVicMemory(ScreenBufferMask, CharsetBufferMask) {

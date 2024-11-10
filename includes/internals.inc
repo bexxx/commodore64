@@ -1,3 +1,5 @@
+#importonce 
+
 .namespace Internals
 {
     .label InterruptHandlerPointer = $ea31
