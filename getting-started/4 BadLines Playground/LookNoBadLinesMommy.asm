@@ -100,7 +100,7 @@ exitirq:
                 
 nmi:             rti
 
-irq2:            pha             // IRQ happening @ line 51
+irq2:           pha             // IRQ happening @ line 51
                 txa
                 pha
                 asl $d019
