@@ -149,7 +149,9 @@ irq1:
     .fill 9, NOP                               // 20: 56 (now vic takes over to fetch sprite 0 data)
 
 spriteStretcher:
+.var spritePointerValueAddresses = List()
 .for (var i = 0; i < 190; i++) {
+    .eval spritePointerValueAddresses.add(* + 1)
     lda #(mod(i,200))                           // 2:  2, select sprite pointer
     sta $7ff8                                   // 4:  6, set sprite 0 pointer
     sta $7ff9                                   // 4: 10, set sprite 1 pointer
@@ -179,6 +181,18 @@ spriteStretcher:
     .fill 12, NOP
     ldx #$ff
     stx $7fff
+
+#if TIMING
+    inc $d020
+#endif 
+
+    .for (var i=0; i < spritePointerValueAddresses.size(); i++) {
+        inc spritePointerValueAddresses.get(i)
+    }
+
+#if TIMING
+    dec $d020
+#endif
 
     ldy Configuration.Irq1YRegZpLocation
     ldx Configuration.Irq1XRegZpLocation
