@@ -129,7 +129,7 @@ finalRasterInterruptStart:
     nop                                         //                  2 cycles
     nop                                         //                  2 cycles
     nop                                         //                  2 cycles
-    lda #LIGHT_BLUE                              //                  2 cycles 
+    lda #LIGHT_BLUE                             //                  2 cycles 
     sta VIC.BORDER_COLOR                        //                  4 cycles
                                                 // total
                                                 //                 63 cycles
