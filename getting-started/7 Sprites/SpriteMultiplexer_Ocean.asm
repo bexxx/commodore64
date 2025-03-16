@@ -7,29 +7,6 @@ BasicUpstart2(start)
 }
 
 
-                *= $0fc0
-
-SpriteLine("########################")
-SpriteLine("########################")
-SpriteLine("####.......##.......####")
-SpriteLine("###.#......##......#.###")
-SpriteLine("###..#.....##.....#..###")
-SpriteLine("###...#....##....#...###")
-SpriteLine("###....#...##...#....###")
-SpriteLine("###.....#..##..#.....###")
-SpriteLine("###......######......###")
-SpriteLine("###..................###")
-SpriteLine("###..................###")
-SpriteLine("###..................###")
-SpriteLine("###......#####.......###")
-SpriteLine("###.....#..#..#......###")
-SpriteLine("###....#...#...#.....###")
-SpriteLine("###...#....#....#....###")
-SpriteLine("###..#.....#.....#...###")
-SpriteLine("###.#......#......#..###")
-SpriteLine("####.......#.......#.###")
-SpriteLine("########################")
-SpriteLine("########################")
 
                 * = $1000
 
@@ -37,7 +14,7 @@ SpriteLine("########################")
                                 //IRQ happens
 .const IRQ2LINE        = $2a           //This is where sprite displaying begins...
 
-.const MAXSPR          = 24            //Maximum number of sprites
+.const MAXSPR          = 20            //Maximum number of sprites
 
 .const numsprites      = $02           //Number of sprites that the main program wants
                                 //to pass to the sprite sorter
@@ -53,7 +30,6 @@ SpriteLine("########################")
         //Main program
 
 start:          jsr initsprites             //Init the multiplexing-system
-                jsr initraster
                 ldx #MAXSPR                 //Use all sprites
                 stx numsprites
 
@@ -66,6 +42,7 @@ initloop:       lda $e000,x                     //Init sprites with some random
                 sta sprf,x
                 dex
                 bpl initloop
+                jsr initraster
 
 mainloop:       inc Configuration.hasUpdatedSpritesZP
                //Signal to IRQ: sort the
@@ -91,10 +68,13 @@ moveloop:       lda $e040,x                     //Move the sprites with some
 
 initraster:     sei
 
+                lda #$35
+                sta $01
+
                 lda #<irq1
-                sta $0314
+                sta $fffe
                 lda #>irq1
-                sta $0315
+                sta $ffff
                 lda #$7f                    //CIA interrupt off
                 sta $dc0d
                 lda #$01                    //Raster interrupt on
@@ -104,6 +84,9 @@ initraster:     sei
                 lda #IRQ1LINE               //Line where next IRQ happens
                 sta $d012
                 lda $dc0d                   //Acknowledge IRQ (to be sure)
+                lda $dd0d
+                lsr $d019
+                
                 cli
                 rts
 
@@ -122,6 +105,12 @@ is_orderlist:   txa                             //0,1,2,3,4,5... order
         //Raster interrupt 1. This is where sorting happens.
 
 irq1: {
+        pha
+        txa
+        pha
+        tya
+        pha
+
     lsr $d019                       //Acknowledge raster interrupt
                 lda #$ff                        //Move all sprites
                 sta $d001                       //to the bottom to prevent
@@ -155,12 +144,19 @@ irq1_notmorethan8:
                 lda #$00                        //for the actual sprite display
                 sta sprirqcounter               //routine
                 lda #<irq2                      //Set up the sprite display IRQ
-                sta $0314
+                sta $fffe
                 lda #>irq2
-                sta $0315
+                sta $ffff
                 jmp irq2_direct                 //Go directly// we might be late
+
 irq1_nospritesatall:
-                jmp $ea81
+                pla
+                tay
+                pla
+                tax
+                pla
+
+                rti
 
 irq1_beginsort: inc $d020
                 ldx #MAXSPR
@@ -216,7 +212,14 @@ irq1_sortloop3: ldy sortorder,x                //Final loop:
 
         //Raster interrupt 2. This is where sprite displaying happens
 
-irq2:           lsr $d019                       //Acknowledge raster interrupt
+irq2:          
+        pha
+        txa
+        pha
+        tya
+        pha
+
+ lsr $d019                       //Acknowledge raster interrupt
                
 irq2_direct:
                 lda #RED
@@ -260,17 +263,25 @@ irq2_endspr:    cmp #$ff                        //Was it the endmark?
                 cmp $d012                       //Already late from that?
                 bcc irq2_direct                 //Then go directly to next IRQ
                 sta $d012
-                jmp $ea81
+                jmp exitIrq
+
+
 irq2_lastspr:   lda #<irq1                      //Was the last sprite,
-                sta $0314                       //go back to irq1
+                sta $fffe                       //go back to irq1
                 lda #>irq1                      //(sorting interrupt)
-                sta $0315
+                sta $ffff
                 lda #IRQ1LINE
                 sta $d012
                 lda #LIGHT_BLUE
                 sta $d020
+exitIrq:
+                pla
+                tay
+                pla
+                tax
+                pla
 
-                jmp $ea81
+                rti
 
 sprx:           .fill MAXSPR,0                   //Unsorted sprite table
 spry:           .fill MAXSPR,0
@@ -330,4 +341,28 @@ ortbl:          .byte 1
                 .byte 64
                 .byte 255-128
                 .byte 128
+
+                *= $0fc0
+
+SpriteLine("########################")
+SpriteLine("########################")
+SpriteLine("####.......##.......####")
+SpriteLine("###.#......##......#.###")
+SpriteLine("###..#.....##.....#..###")
+SpriteLine("###...#....##....#...###")
+SpriteLine("###....#...##...#....###")
+SpriteLine("###.....#..##..#.....###")
+SpriteLine("###......######......###")
+SpriteLine("###..................###")
+SpriteLine("###..................###")
+SpriteLine("###..................###")
+SpriteLine("###......#####.......###")
+SpriteLine("###.....#..#..#......###")
+SpriteLine("###....#...#...#.....###")
+SpriteLine("###...#....#....#....###")
+SpriteLine("###..#.....#.....#...###")
+SpriteLine("###.#......#......#..###")
+SpriteLine("####.......#.......#.###")
+SpriteLine("########################")
+SpriteLine("########################")
 
