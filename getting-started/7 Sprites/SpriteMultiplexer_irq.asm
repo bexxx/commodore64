@@ -1,3 +1,6 @@
+// coded in parallel to Martin Piper's great sprite multiplexer explanation video
+// https://www.youtube.com/watch?v=BtTCzjmwsMA
+
 #import "../../includes/cia1_constants.inc"
 #import "../../includes/cia2_constants.inc"
 #import "../../includes/vic_constants.inc"
