@@ -74,10 +74,6 @@ main:
     lda #$35                                    // configure ram
     sta $1 
     
-    lda #%01111111
-    sta $dc0d
-    sta $dd0d 
-
     lsr $d019
 
     cli                                         // allow irqs again

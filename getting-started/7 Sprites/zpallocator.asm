@@ -22,17 +22,17 @@
 	.for(var j=0; j<addressLists.size(); j++) {
 		.var addressList = addressLists.get(j)
 		.for(var i=0; i<addressList.size(); i++) {
-			.eval allocateSpecificZpByte(addressList.get(i))
+			.eval allocateSpecificZpByte(addressList.get(i), "")
 		}
 	}
 }
 
-.function @allocateZpByte() {
+.function @allocateZpByte(name) {
 	.for(var i=255; i>=0; i-=1) {
 		.if(freeZpAddresses.containsKey(i)) {
-            .print "Allocate ZP byte $" + toHexString(i)
+            .print "Allocate ZP byte " + name + ": $" + toHexString(i)
             
-			.return allocateSpecificZpByte(i)
+			.return allocateSpecificZpByte(i, "")
 		}
 	}
 
@@ -52,7 +52,7 @@
             .print "Allocate ZP " + name + ": $" + toHexString(i) + "-$" + toHexString(i+count-1)
 
             .for(var j=0; j < count; j++) {
-                .eval allocateSpecificZpByte(i+j)
+                .eval allocateSpecificZpByte(i+j, "")
             }
 
             .return i
@@ -64,12 +64,14 @@
 
 
 
-.function @allocateZpWord() {
+.function @allocateZpWord(name) {
 	.for(var i=0; i<256; i+=2) {
 		.if(freeZpAddresses.containsKey(i) && freeZpAddresses.containsKey(i+1)) {
-			.var lowByte = allocateSpecificZpByte(i)
-			.eval allocateSpecificZpByte(i+1)
-            .print "Allocate ZP word $" + toHexString(i) + " + $" + toHexString(i+1)
+			.var lowByte = allocateSpecificZpByte(i, name)
+			.eval allocateSpecificZpByte(i+1, name)
+            .if (name.size() > 0) {
+                .print "Allocate ZP word $" + toHexString(i) + " + $" + toHexString(i+1)
+            } 
 			.return lowByte
 		}
 	}
@@ -77,16 +79,18 @@
 	.errorif true, "No free words available in zero page."
 }
 
-.function @allocateSpecificZpByte(requestedAddress) {
+.function @allocateSpecificZpByte(requestedAddress, name) {
 	.errorif !freeZpAddresses.containsKey(requestedAddress), "Address $"+toHexString(requestedAddress)+" is taken."
 	.eval freeZpAddresses.remove(requestedAddress)
-    //.print "Allocate specific ZP byte $" + toHexString(requestedAddress)
+    .if (name.size() > 0) {
+        .print "Allocate specific ZP byte " + name + ": $" + toHexString(requestedAddress)
+    }
 	.return requestedAddress
 }
 
-.function @allocateSpecificZpWord(requestedAddress) {
-	.var address = allocateSpecificZpByte(requestedAddress)
-	.eval allocateSpecificZpByte(requestedAddress+1)
+.function @allocateSpecificZpWord(requestedAddress, name) {
+	.var address = allocateSpecificZpByte(requestedAddress, name)
+	.eval allocateSpecificZpByte(requestedAddress+1, name)
 	.return address
 }
 
