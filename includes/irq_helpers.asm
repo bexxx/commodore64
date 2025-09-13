@@ -61,6 +61,60 @@ next:
     rts
     
 done:
+    lda #<after
+    sta pt
+    lda #>after
+    sta pt + 1
+
+after:
+}
+
+.macro parallel_delay(pt, frames) {
+    .errorif (frames > 255), "delay too long, use parallel_long_delay instead"
+    lda counter: #$0
+    inc counter
+    cmp #frames
+    beq done
+    rts
+    
+done:
+    lda #<after
+    sta pt
+    lda #>after
+    sta pt + 1
+
+after:
+}
+
+.macro parallel_long_delay(pt, frames) {
+    lda counterHi: #$0
+    cmp #>frames
+    bne !+
+    lda counterLo: #0
+    cmp #<frames
+    beq done
+!:
+    inc counterLo
+    bne !+
+    inc counterHi
+!:
+    rts
+
+done:
+    lda #<after
+    sta pt
+    lda #>after
+    sta pt + 1
+
+after:
+}
+
+
+.macro continue_with(pt, label) {
+    lda #<label
+    sta pt
+    lda #>label
+    sta pt + 1
 }
 
 .macro delay_repeatable(pt, frames) {
@@ -71,8 +125,6 @@ setupProtothread:
     sta pt
     lda #>next
     sta pt + 1
-    lda #0
-    sta counter
 next:
     lda counter: #$0
     inc counter
@@ -81,6 +133,8 @@ next:
     rts
    
 done:
+    lda #0
+    sta counter
 }
 
 .macro longdelay_repeatable(pt, frames) {
