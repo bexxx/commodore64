@@ -77,3 +77,23 @@ next:
     
 done:
 }
+
+.macro delay_autorepeat(pt, frames) {
+setupProtothread:
+    lda #<next
+    sta pt
+    lda #>next
+    sta pt + 1
+    lda #0
+    sta counter
+next:
+    lda counter: #$0
+    inc counter
+    cmp #frames
+    beq done
+    rts
+
+done:
+    lda #0
+    sta counter
+}
