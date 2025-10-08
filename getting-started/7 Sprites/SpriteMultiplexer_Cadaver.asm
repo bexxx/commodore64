@@ -92,11 +92,14 @@ main:
     lda #$ff                                // signal wait to the main loop initially
     sta Configuration.newFrame
 
-!:
+mainLoop:
     jsr mainSpriteLoop.UpdateFrame          // main loop just sorts and copies the sprite data
-    jmp !-
+    jmp mainLoop
 
+//
 // Initialize the sprite multiplexing system data structures
+// Call once only 
+//
 initSpriteMultiplexerData: {
     .var tempBitmaskZp = allocateZpByte("tempBitmaskZp")
 
@@ -140,6 +143,9 @@ bitmaskStillOk:
     .eval deallocateZpByte(tempBitmaskZp)
 }
 
+//
+// Initialize the sprite data itself, like expansion, (multi)colors, bg priority
+//
 initSprites: {
     lda #$0
     lda $d011
@@ -167,6 +173,7 @@ initSprites: {
                                             // to avoid one frame flash when they're
     stx $d015                               // actually used for the first time)
 
+    // initialize sprite pointers and positions with demo data
 
     // place sprites on x coords
     ldx #Configuration.MAX_SPRITES - 1
@@ -225,6 +232,9 @@ initSprites: {
     rts
 }
 
+//
+// Disable CIA and enable raster irqs and set handler address
+//
 initInterrupts:
     sei
 
@@ -254,6 +264,10 @@ initInterrupts:
 
     rts
 
+
+    ///
+    /// Irq handler for the initial sprites on top of the screen.
+    ///
 .align $100
 topSpriteIrq: {
     // save registers
@@ -273,19 +287,19 @@ topSpriteIrq: {
     ldx #$00                                // Reset frame update
     stx Configuration.newFrame
 
-    lda d015Value: #0
+    lda d015Value: #0                       // initially disable all sprites
     sta $d015
     beq noSprites
 
-    lda #<continuationSpriteIrq             // Set up the sprite display IRQ
+    lda #<continuationSpriteIrq             // there are more sprites, handle them in the next raster irq
     sta $fffe
     lda #>continuationSpriteIrq
     sta $ffff
 
-    jmp continuationSpriteIrq.displaySprites
+    jmp continuationSpriteIrq.displaySprites    // jump straight to the sprite display code
 
 noSprites:
-    lsr $d019
+    lsr $d019                               // acknowledge raster IRQ                
 
 #if TIMING_IRQ
     lda Configuration.savedTimingD020
@@ -299,6 +313,8 @@ noSprites:
     rti
 }
 
+    // after the initial sprite irq, this one will be used to handle the next batch of sprites
+    // which could be used (raster line and number of sprites vary, will be determined in the updateFrame function)
 .align $100
 continuationSpriteIrq: {
     sta Configuration.spriteIrqAccuSaveZp
@@ -310,15 +326,23 @@ continuationSpriteIrq: {
     sta $d020
 #endif 
 
+
+    // if there is no time to set up the next sprite irq, we need to do it in a busy loop
+    // this will be the jump target
 continuationSpriteIrqDirect:
 Irq2_SprIndex:
-    ldx spriteIndex: #$00
+    ldx spriteIndex: #$00                   // get the sprite index for this irq
 
+
+    // to keep track of the hw sprite that will be used next, this jump will be updated
+    // with the lo-address of that part of code that will write the data
+    // (labels: sprite0Pointer-sprite7Pointer, all in a single page to just require lo address update)
+    // can't do a bpl here, because we need to jump more than 128 bytes away. 
 Irq2_SprJump:
-    jmp spriteJumpAddressLo: sprite0Positions
+    jmp spriteJumpAddressLo: sprite0Positions       // Go through the first sprite IRQ immediately
 
 displaySprites:
-    ldx firstSortedSpriteIndex: #$0         // Go through the first sprite IRQ immediately
+    ldx firstSortedSpriteIndex: #$0         
 
 sprite0Positions:
     .eval startPageCheck()
@@ -328,9 +352,10 @@ sprite0Positions:
     ldy sortedSpritesD010,x
     sta VIC.SPRITE_7_X
     sty $d010
-    lda sortedSpritesPointers,x
 sprite0Pointer:
+    lda sortedSpritesPointers,x
     sta Configuration.ScreenRamAddress + VIC.SPRITE_POINTER_7_OFFSET
+sprite0Colors:
     lda sortedSpritesColors,x
     sta VIC.SPRITE_MULTICOLOR_3_7
     bmi !done+
@@ -343,9 +368,10 @@ sprite1Positions:
     ldy sortedSpritesD010,x
     sta VIC.SPRITE_6_X
     sty $d010
-    lda sortedSpritesPointers,x
 sprite1Pointer:
+    lda sortedSpritesPointers,x
     sta Configuration.ScreenRamAddress + VIC.SPRITE_POINTER_6_OFFSET
+sprite1Colors:
     lda sortedSpritesColors,x
     sta VIC.SPRITE_MULTICOLOR_3_6
     bmi !done+
@@ -358,9 +384,10 @@ sprite2Positions:
     ldy sortedSpritesD010,x
     sta VIC.SPRITE_5_X
     sty $d010
-    lda sortedSpritesPointers,x
 sprite2Pointer:
+    lda sortedSpritesPointers,x
     sta Configuration.ScreenRamAddress + VIC.SPRITE_POINTER_5_OFFSET
+sprite2Colors:
     lda sortedSpritesColors,x
     sta VIC.SPRITE_MULTICOLOR_3_5
     bmi !done+
@@ -373,14 +400,16 @@ sprite3Positions:
     ldy sortedSpritesD010,x
     sta VIC.SPRITE_4_X
     sty $d010
-    lda sortedSpritesPointers,x
 sprite3Pointer:
+    lda sortedSpritesPointers,x
     sta Configuration.ScreenRamAddress + VIC.SPRITE_POINTER_4_OFFSET
+sprite3Colors:
     lda sortedSpritesColors,x
     sta VIC.SPRITE_MULTICOLOR_3_4
     bpl !+
-!done:
-    jmp !done+
+
+!done:                                      // the real done label is > 128 bytes away from the previous bmi commands
+    jmp !done+                              // so this one need to jump to the final one instead
 !:
     inx
 
@@ -391,9 +420,10 @@ sprite4Positions:
     ldy sortedSpritesD010,x
     sta VIC.SPRITE_3_X
     sty $d010
-    lda sortedSpritesPointers,x
 sprite4Pointer:
+    lda sortedSpritesPointers,x
     sta Configuration.ScreenRamAddress + VIC.SPRITE_POINTER_3_OFFSET
+sprite4Colors:
     lda sortedSpritesColors,x
     sta VIC.SPRITE_MULTICOLOR_3_3
     bmi !done+
@@ -406,9 +436,10 @@ sprite5Positions:
     ldy sortedSpritesD010,x
     sta VIC.SPRITE_2_X
     sty $d010
-    lda sortedSpritesPointers,x
 sprite5Pointer:
+    lda sortedSpritesPointers,x
     sta Configuration.ScreenRamAddress + VIC.SPRITE_POINTER_2_OFFSET
+sprite5Colors:
     lda sortedSpritesColors,x
     sta VIC.SPRITE_MULTICOLOR_3_2
     bmi !done+
@@ -421,9 +452,10 @@ sprite6Positions:
     ldy sortedSpritesD010,x
     sta VIC.SPRITE_1_X
     sty $d010
-    lda sortedSpritesPointers,x
 sprite6Pointer:
+    lda sortedSpritesPointers,x
     sta Configuration.ScreenRamAddress + VIC.SPRITE_POINTER_1_OFFSET
+sprite6Colors:
     lda sortedSpritesColors,x
     sta VIC.SPRITE_MULTICOLOR_3_1
     bmi !done+
@@ -437,38 +469,44 @@ sprite7Positions:
     ldy sortedSpritesD010,x
     sta VIC.SPRITE_0_X
     sty $d010
-    lda sortedSpritesPointers,x
 sprite7Pointer:
+    lda sortedSpritesPointers,x
     sta Configuration.ScreenRamAddress + VIC.SPRITE_POINTER_0_OFFSET
+sprite7Colors:
     lda sortedSpritesColors,x
     sta VIC.SPRITE_MULTICOLOR_3_0
     bmi !done+
     inx
 
+    // not done with changing sprite positions, but out of hw sprites, so start reusing sprite_7
     jmp sprite0Positions
+
+    // make sure all spriteNPosition labels are in the same page
     .errorif (>sprite7Positions) != (>sprite0Positions), "Code crosses a page!"
 
 !done:
     ldy spriteIrqLines,x                    // Get startline of next IRQ
     beq doneWithFrame                       // (0 if was last)
     inx
-    stx spriteIndex                         // Store next IRQ sprite start-index
+    stx spriteIndex                         // Store next IRQ sprite start-index to fetch the next sprite data 
     txa
     and #$07
     tax
-    lda spriteIrqJumpTable,x                // Get the correct jump address
-    sta spriteJumpAddressLo
+    lda spriteIrqJumpTable,x                // Get the correct jump address to have the next irq start
+    sta spriteJumpAddressLo                 // with the next hw sprite
     dey
-Irq2_SprIrqDoneNoLoad:
-    tya
-    sec
-    sbc #$03                                // are we already late for the next IRQ?
+
+spriteIrqDone:
+    tya                                     // Get the raster line for the next sprite irq
+    sec             
+    sbc #$03                                // are we already late for the next IRQ? (<= 4 raster lines away)
     cmp $d012
     bcs doAnotherSpriteContinuationIrq
     jmp continuationSpriteIrqDirect
 
 doAnotherSpriteContinuationIrq:
     sty $d012                               // we have enough time, just set next raster irq line
+                                            // handler code will stay the same
     lsr $d019                               // acknowledge raster IRQ
 
 doneWithInterrupt:
