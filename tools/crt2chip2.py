@@ -1,43 +1,80 @@
-#!/usr/bin/env python3
 """
 EasyFlash crt to double 4Mbit binary files converter
-Converted from C++ to Python by GitHub Copilot
+Converted from C++ to Python by GitHub Copilot. Touched by a human.
 Original by e5frog 2020
+
+To generate the driver binaries, download/clone the EasyFlash repository: hhttps://gitlab.com/easyflash/eapi
+Go to directory eapi and type `make all` to generate the driver binaries.
+Alternatively, download them from this Forum64 post: https://www.forum64.de/index.php?thread/153004-easyflash-1-eproms-mit-eprommer-brennen-t48-tl866/&postID=2304299#post2304299
+
+Note on placement of the flash ICs:
+The U3 flash IC will be placed in the lower socket of the EasyFlash cartridge PCB, closer to the edge connector.
+The U4 flash IC will be placed in the upper socket of the EasyFlash cartridge PCB,
 """
 
 import sys
 import os
+import argparse
 
 
 def main():
-    # Default values
-    inputfilename = "easy.crt"
-    pad = False
+    # Set up argument parser
+    parser = argparse.ArgumentParser(
+        description='EasyFlash crt to double 4Mbit binary files converter',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s inputfile.crt
+  %(prog)s inputfile.crt -p
+  %(prog)s inputfile.crt --pad
+  %(prog)s inputfile.crt --pad --verbose
+
+Output files are named: inputfile_U4.bin and inputfile_U3.bin
+The program will strip the file extension from the input filename.
+        """
+    )
+    
+    parser.add_argument(
+        'inputfile',
+        nargs='?',
+        default='inputfile.crt',
+        help='Input CRT file (default: inputfile.crt)'
+    )
+    
+    parser.add_argument(
+        '-p', '--pad',
+        action='store_true',
+        help='Pad output files to full 512kB chip size'
+    )
+
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='Enable verbose output'
+    )
+
+    parser.add_argument(
+        '-d', '--driver',
+        help='Update driver to given binary'
+    )
+
+    args = parser.parse_args()
+    
+    # Get parsed values
+    inputfilename = args.inputfile
+    driver_filename = args.driver
+    pad = args.pad
+    verbose = args.verbose
     chipsize = 524288
     infilesize = 1059998
     
     # Header to check
     header = b"C64 CARTRIDGE   "
     
-    # Check command line arguments
-    if len(sys.argv) > 1:
-        if sys.argv[1] in ['-h', '/?', '-?', '/h']:
-            print("\nEither drop a file on the icon, name file easy.crt and double-click or")
-            print("use syntax: crt2chip2.py inputfile.crt from command line.")
-            print("Outputs are called: inputfile_U4.bin and inputfile_U3.bin.")
-            print("Program will assume a .crt (or other 4 char) suffix that will be stripped.")
-            print("Using -p after filename pads the output files to full 512kB chipsize.\n\n")
-            return 0
-        
-        inputfilename = sys.argv[1]
-        
-        if len(sys.argv) > 2 and sys.argv[2].lower() in ['-p', '/p']:
-            pad = True
-    
-    print("\n\n*******************************************************************************")
-    print("*     EasyFlash crt to double 4Mbit binary files converter by e5frog 2020     *")
-    print("*******************************************************************************")
-    print("\n\n")
+    print("********************************************************************************")
+    print("* EasyFlash crt to double 4Mbit binary files converter, based on e5frog's tool *")
+    print("********************************************************************************")
+    print("\n")
     
     # Get filename without extension
     base_name = os.path.splitext(inputfilename)[0]
@@ -45,7 +82,7 @@ def main():
     # Set output filenames
     U4name = f"{base_name}_U4.bin"
     U3name = f"{base_name}_U3.bin"
-    
+
     # Display information
     print(f"Input filename:\n{inputfilename}\n")
     print(f"U4 output file:\n{U4name}\n")
@@ -55,13 +92,26 @@ def main():
     if not os.path.exists(inputfilename):
         print(f"\a\nInput file error:\n{inputfilename}\nProgram will exit\n")
         return 1
-    
+
+    # Check if driver file exists
+    if not os.path.exists(driver_filename):
+        print(f"\a\nDriver file error:\n{driver_filename}\nProgram will exit\n")
+        return 1
+
+    driver_file_size = os.path.getsize(driver_filename)
+    if driver_file_size not in [768, 770]:
+        print("\a\nDriver file size is incorrect. Expected 768 or 770 bytes.\nProgram will exit\n")
+        return 1
+
     # Get file size
     filesize = os.path.getsize(inputfilename)
     
     if filesize > infilesize:
         print(f"\a\nFile seems to be too large:\n{inputfilename}\nWill try anyway...\n")
     
+    if verbose:
+        print(f"\nFile size is {hex(filesize)}\n")
+
     try:
         with open(inputfilename, 'rb') as filin:
             # Check 16 byte header 'C64 CARTRIDGE   '
@@ -80,7 +130,9 @@ def main():
                 print("\a\nWARNING, EasyFlash cartridge hardware type is not set in .crt.\n")
             
             readbytes = 24
-            
+            if verbose:
+                print("Header OK")
+
             # Initialize chip buffers with 0xFF
             U4chip = bytearray([0xFF] * chipsize)
             U3chip = bytearray([0xFF] * chipsize)
@@ -99,6 +151,9 @@ def main():
                 
                 while not (headbuffer[0] == ord('C') and headbuffer[1] == ord('H') and
                           headbuffer[2] == ord('I') and headbuffer[3] == ord('P')):
+                    if verbose:
+                        print("Checking CHIP header")
+
                     if readbytes >= filesize:
                         print("\a\nNo valid CHIP header found.\nProgram will exit\n")
                         print(f"\nRead bytes: {readbytes}")
@@ -110,7 +165,10 @@ def main():
                     headbuffer[2] = headbuffer[3]
                     headbuffer[3] = filin.read(1)[0]
                     readbytes += 1
-                
+                if verbose:
+                    print("'CHIP' found, move forward")
+                    print("CHIP header found")
+
                 # CHIP header found, parse it
                 packet_size_bytes = filin.read(4)  # Bytes 04-07
                 readbytes += 4
@@ -121,11 +179,16 @@ def main():
                 bank_bytes = filin.read(2)  # Bytes 0A-0B
                 readbytes += 2
                 bankno = bank_bytes[1]
-                
+                if verbose:
+                    print(f"Bank number: {bankno}")
+
                 address_bytes = filin.read(2)  # Bytes 0C-0D
                 readbytes += 2
                 addresspos = address_bytes[0]
                 
+                if verbose:
+                    print(f"Address of this packet: {hex(addresspos)}")
+
                 # Determine which chip based on address
                 if addresspos == 0x80 and not U4:
                     U4 = True
@@ -158,6 +221,21 @@ def main():
             writeU4 = chipsize
             writeU3 = chipsize
         
+        if driver_filename: 
+            with open(driver_filename, "rb") as driver_file:
+                if driver_file_size == 770:
+                    print("Driver file has start address prefix header, skipping first 2 bytes")
+                    driver_file.seek(2)
+                driver_data = driver_file.read(768)
+
+                index = U3chip.find(b"eapi")
+                if index == -1:
+                    print("Could not find EAPI driver signature in U4 data, driver update failed")
+                    return 1
+                
+                print (f"Found EAPI driver at index: {hex(index)} in U3 data, updating driver data")
+                U3chip[index:index+768] = driver_data
+          
         with open(U4name, 'wb') as filout1:
             filout1.write(U4chip[:writeU4])
         
