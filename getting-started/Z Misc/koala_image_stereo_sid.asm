@@ -1,3 +1,6 @@
+// sid by Nordishsound, https://csdb.dk/release/?id=258327
+// gfx wired by Captain Future, https://csdb.dk/scener/?id=25580
+
 #import "../../../commodore64/includes/vic_constants.inc"
 #import "../../../commodore64/includes/cia1_constants.inc"
 #import "../../../commodore64/includes/internals.inc"
