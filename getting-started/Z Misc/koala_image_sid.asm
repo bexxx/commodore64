@@ -8,24 +8,55 @@
 BasicUpstart2(main)
 .var music = LoadSid("Bohemian_Rhapsody.sid")
 
+//#define SHOW_TIMING
+
 * = $0900 "Code"
 main:
     // --- setup music -------------------------
     lax #0
     tay
     lda #music.startSong - 1
-    //jsr music.init
+    jsr music.init
 
     // --- setup graphics ----------------------
-    //jsr clearScreen1
-    //jsr clearScreen2    
     jsr setupGraphics
     jsr setupKoalaColors
-    //jsr setupBackgroundColors
 
-!:  // --- main loop ---------------------------
-    //jsr music.play
-    jmp !-
+lp:  // --- main loop ---------------------------    
+    BusyWaitForNewScreen()
+#if SHOW_TIMING
+    inc $d020
+#endif
+    jsr music.play
+#if SHOW_TIMING
+    dec $d020
+#endif
+
+!:  lda $d012
+    cmp #$80
+    bne !-
+
+#if SHOW_TIMING
+    inc $d020
+#endif
+    jsr music.play
+#if SHOW_TIMING
+    dec $d020
+#endif
+
+!:  lda $d012
+    cmp #$f0
+    bne !-
+
+#if SHOW_TIMING
+    inc $d020
+#endif
+    jsr music.play
+#if SHOW_TIMING
+    dec $d020
+#endif
+
+    jmp lp
 
 setupGraphics:
     SelectVicMemoryBank(CIA2.VIC_SELECT_BANK2_MASK)    
