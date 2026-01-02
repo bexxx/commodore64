@@ -9,20 +9,24 @@ BasicUpstart2(main)
 .var music = LoadSid("Bohemian_Rhapsody.sid")
 
 //#define SHOW_TIMING
+#define ENABLE_MUSIC
 
 * = $0900 "Code"
 main:
     // --- setup music -------------------------
+#if ENABLE_MUSIC
     lax #0
     tay
     lda #music.startSong - 1
     jsr music.init
+#endif
 
     // --- setup graphics ----------------------
-    jsr setupGraphics
     jsr setupKoalaColors
+    jsr setupGraphics
 
 lp:  // --- main loop ---------------------------    
+#if ENABLE_MUSIC
     BusyWaitForNewScreen()
 #if SHOW_TIMING
     inc $d020
@@ -56,36 +60,32 @@ lp:  // --- main loop ---------------------------
     dec $d020
 #endif
 
+#endif
     jmp lp
 
 setupGraphics:
-    SelectVicMemoryBank(CIA2.VIC_SELECT_BANK2_MASK)    
+    SelectVicMemoryBank(CIA2.VIC_SELECT_BANK1_MASK)    
 
     lda VIC.GRAPHICS_POINTER
     and #VIC.SELECT_SCREENBUFFER_CLEAR_MASK
     and #VIC.SELECT_BITMAP_CLEAR_MASK
-    ldx #BLACK
-    stx VIC.BORDER_COLOR
-    ora #VIC.SELECT_SCREENBUFFER_AT_0000_MASK
+    ora #VIC.SELECT_SCREENBUFFER_AT_1000_MASK
     ora #VIC.SELECT_BITMAP_AT_2000_MASK
     sta VIC.GRAPHICS_POINTER
 
-    lda VIC.SCREEN_CONTROL_REG
-    ora #VIC.ENABLE_BITMAP_MODE_MASK
-    sta VIC.SCREEN_CONTROL_REG
- 
-    lda VIC.CONTR_REG
-    ora #VIC.ENABLE_40_COLUMNS_MASK
-    sta VIC.CONTR_REG
+    ldx #BLACK
+    stx VIC.BORDER_COLOR
+    stx VIC.SCREEN_COLOR
 
-    lda VIC.CONTR_REG                           
-    ora #VIC.ENABLE_MULTICOLOR_MASK
-    and #%11111000                              
-    sta VIC.CONTR_REG    
+    lda #%00111011      
+    sta $d011           
+    lda #%00011000      
+    sta $d016           
+                                 
     rts
 
 setupKoalaColors:
-    ldx #$00
+    ldx #0
 !:
     lda koala_colors + $000,x
     sta $d800 + $000,x
@@ -93,14 +93,12 @@ setupKoalaColors:
     sta $d800 + $100,x
     lda koala_colors + $200,x
     sta $d800 + $200,x
-    lda koala_colors + $300,x
-    sta $d800 + $300,x
+    lda koala_colors+$02e8,x
+    sta $d800 + $2e8,x
     dex
     bne !-
 
     rts
-
-
 
 * = music.location "Music"
 .fill music.size, music.getData(i)
@@ -130,12 +128,11 @@ setupKoalaColors:
 .print "pagelength="+music.pagelength
 
 
-* = $8000 "pic_screen"
-    .import binary "Bohemian_better.kla", $1F40 + 2, 1000
+* = $5000 "pic_screen"
+    .import binary "Bohemian_better.kla", 8000 + 2, 1000
 
+* = $9000 "koala colors for colorram" // temporary area
 koala_colors:
-* = $5000 "koala colors for colorram" // temporary area
-    .import binary "Bohemian_better.kla", $2328 + 2, 1000
-
-* = $a000 "bitmap"
-    .import binary "Bohemian_better.kla", 2, $1f3f
+    .import binary "Bohemian_better.kla", 9000 + 2, 1000    
+* = $6000 "bitmap"
+    .import binary "Bohemian_better.kla", 2, 8000
