@@ -118,7 +118,6 @@ fixcycle:
 .segment Default "stretcher code"               // shows the bytes for this code, when using -showmem
 
 irqStretcherStart: {
-irqStableDemo:
 row: 
     .for (var i=0; i<25; i++) {
         SaveIrqRegistersZPWithTimer(Configuration.IrqStretchAccuZpLocation, Configuration.IrqStretchXRegZpLocation, Configuration.IrqStretchYRegZpLocation)
@@ -139,10 +138,9 @@ row:
         bne !-          // 2/3: 20, just 2 or 3 R cycles, can be interrupted any cycle, so we have 20 cycles only for this badline
 
 !:
-.break
         lda $d012
         cmp #250
-        bpl !+ 
+        bcc !+ 
         jmp endFrame
 !:
         .fill 10, NOP
@@ -152,12 +150,11 @@ row:
         irqwait: irq_wait($ff, Configuration.IrqStretchAccuZpLocation, Configuration.IrqStretchXRegZpLocation, Configuration.IrqStretchYRegZpLocation)
     }
 
-    .fill 50, NOP
-
 endFrame:
 
+.break
     ldx irqStretcherStart.row[0].stretch
-    cpx 200
+    cpx #40
     bne !+
     ldx #0
 !:
