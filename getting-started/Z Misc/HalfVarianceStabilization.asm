@@ -27,11 +27,11 @@ stabilize:
     // execution timing by opcode: 
     // https://codebase64.c64.org/doku.php?id=base:6510_instruction_timing&s[]=opcode
     // the earliest time when the cpx has read the row number in the last of the 4 cycles.
-    // this means the longest execution is 
+    // to compare the current raster line with the desired one the row number must be read in the last cycle of the cpx
+    // this means the shortest execution  looks like 
+    // last read cycles of cpx (1) + bne (no jump==2) = 3 cycles
+    // longest execution is when line changed after cpx:
     // bne (3) + cpx (4) + bne (2) = 9
-    // the shortest moment is before the cpx reads the value, which is in cycle 3 of cpx 
-    // and the execution looks like 
-    // last read cycles of cpx (1) + bne (2) = 3
     // this means the jitter is between 3 and 9
     // the main idea of the following code is to use the knowledge of the current jitter and
     // divide it by half with each further line
@@ -41,8 +41,8 @@ stabilize:
     jsr cycles_43       // 6 + 43:  [52-58]
     bit $ea             // 3:       [55-61]
     nop                 // 2:       [57-63]
-    cpx $d012           // 4:       [61-67]
-    beq skip1           // 2,3:
+    cpx $d012           // 4:       [61-67] 64,65,66,67=4cycles, when its not equal
+    beq skip1           // 2,3:  x=next line           61,62,63 when it's equal
     // too early        // 2:       [63-69]             we could be in 63-65 now, jitter 1-3 cycles
     nop                 // 2:       [ 2- 5]
     nop                 // 2:       [ 4- 7]
@@ -65,10 +65,9 @@ skip2:
     cpx $d012           //  4:      []
     bne onecycle
 onecycle: 
-.break
+
 rts
 
-.break
 cycles_43:
     ldy #$06            // 2:            2
 lp2:
