@@ -3,6 +3,8 @@
 #import "../../includes/cia2_constants.inc"
 #import "../../includes/internals.inc"
 #import "../../includes/zeropage.inc"
+#import "../../includes/BezierEasings.asm"
+
 
 .filenamespace SimpleD011Stretcher
 
@@ -55,8 +57,8 @@ BasicUpstart2(main)
 
     cli
 
-    jsr fillScreen
-
+    //jsr fillScreen
+    jsr copyLogo
 !:    jmp !-
 
 
@@ -117,6 +119,7 @@ fixcycle:
 .align $100                                     // align on the start of a new page
 .segment Default "stretcher code"               // shows the bytes for this code, when using -showmem
 
+.align $80
 irqStretcherStart: {
 row: 
     .for (var i=0; i<25; i++) {
@@ -124,7 +127,7 @@ row:
         nop             // 2: 57
 
  badline:  
-        ldx stretch: #1 // 2: 59
+        ldx stretch: #0 // 2: 59
         beq !++         // 2: 61 / 3: 62
         lda $d011       // 4: 63
 !:
@@ -138,36 +141,79 @@ row:
         bne !-          // 2/3: 20, just 2 or 3 R cycles, can be interrupted any cycle, so we have 20 cycles only for this badline
 
 !:
+        lda $d011
+        bmi quit
         lda $d012
-        cmp #250
+        cmp #247
         bcc !+ 
         jmp endFrame
 !:
         .fill 10, NOP
         lda $d012
         adc #6
+        bcc !+
+        jmp endFrame
+!:      cmp #247
+        bcc !+
+quit:        jmp endFrame
+!:
         sta irqwait.irqset.rasterLine
-        irqwait: irq_wait($ff, Configuration.IrqStretchAccuZpLocation, Configuration.IrqStretchXRegZpLocation, Configuration.IrqStretchYRegZpLocation)
+        irqwait: irq_wait(
+            $ff, 
+            Configuration.IrqStretchAccuZpLocation, 
+            Configuration.IrqStretchXRegZpLocation, 
+            Configuration.IrqStretchYRegZpLocation,
+            $80)
     }
 
 endFrame:
 
+//inc $d020
+    lda #0
+    sta $20
+    clc
+    ldx sine1Index: #(SineTable120End - SineTable120 - 1)
+    ldy sind2Index: #(SineTable95End - SineTable95 - 1)
+    .for (var i=0; i<25; i++) {
+        sta irqStretcherStart.row[i].stretch
+    }
 .break
-    ldx irqStretcherStart.row[0].stretch
-    cpx #40
-    bne !+
-    ldx #0
+    .for (var i=0; i<25; i++) {
+        lda SineTable120,x
+        sec
+        sbc SineTable95,y
+        sta irqStretcherStart.row[i].stretch
+        adc $20
+        bcc !+
+        jmp endStretchUpdate
+   !:     
+        adc #7
+        sta $20
+        cmp #200
+        bcc !+
+        jmp endStretchUpdate
+    !:
+        dex
+        bne !+
+        ldx #(SineTable120End - SineTable120 - 1)
+    !:
+        dey
+        bne !+
+        ldy #(SineTable95End - SineTable95 - 1)
+    !:
+    }
+endStretchUpdate:
+//dec $d020
+       dec sine1Index
+        bne !+
+        ldx #(SineTable120End - SineTable120 - 1)
+        stx sine1Index
+    !:
+        dec sind2Index
+        bne !+
+        ldy #(SineTable95End - SineTable95 - 1)
+        sty sind2Index
 !:
-    inx
-    stx irqStretcherStart.row[0].stretch
-    stx irqStretcherStart.row[1].stretch
-    stx irqStretcherStart.row[2].stretch
-    stx irqStretcherStart.row[3].stretch
-    stx irqStretcherStart.row[4].stretch
-    stx irqStretcherStart.row[5].stretch
-    stx irqStretcherStart.row[6].stretch
-    stx irqStretcherStart.row[7].stretch
-
     lda #%00011011
     sta $d011
 
@@ -189,52 +235,50 @@ endFrame:
     rti
 }
 
-//		ldx #7		;2		
-//		beq +		;4
-//		lda $D011	;8
-//-		bit $ea			;03
-//		clc				;05
-//		adc #$01		;07
-//		and #$07		;09
-//		ora #$38		;11
-//;		lda #$01		;11
-//		sta $D011		;15
-//		dex				;17
-//		bne -			;20	
+// python3 .\sinusgen.py -type 16 -min 0 -max 23 -steps 255 -previewfile test.png -show
+//stretchValues:
+//    .import binary "output.bin"
+
+.align $100
+.segment Default "sine table source"
+stretchValues:
+SineTable120:
+    .fill 60, 9+ (9 * sin(toRadians((i*360)/(60)))) 
+SineTable120End:
+
+SineTable95:
+    .fill 70, 9+ (9 * sin(toRadians((i*360)/(70)))) 
+SineTable95End:
 
 
+copyLogo:
+    ldx #0
+!:  lda screen + $000,x
+    sta $0400,x
+    lda screen + $100,x
+    sta $0500,x
+    lda screen + $200,x
+    sta $0600,x
+    lda screen + $300,x
+    sta $0700,x
 
-//!:
+    lda colors + $000,x
+    sta $d800,x
+    lda colors + $100,x
+    sta $d900,x 
+    lda colors + $200,x
+    sta $da00,x
+    lda colors + $300,x
+    sta $db00,x
 
-//    lda $d012       // 4: 19
-//    cmp #$fe
-//    bne !+
-//    jmp done
+    lda screen_001
+    sta $d020
+    lda screen_001 + 1
+    sta $d021
 
-//.break
-    // fix $d011 after visible screen for next frame
-//!:
-//    lda $d012
-//    cmp #252
-//    bne !-
-//    lda #%00011011
-//    sta $d011
-//
-//
-//    // check whether done
-//    // else repeat
-//
-//done:    
-//   inc stretch
-//    lda stretch
-//    cmp 200
-//    bne !+
-//    lda #1
-//    sta stretch
-//!:
-//    jmp newFrame   
-
-
+    dex
+    bne !-
+    rts
 
 
 fillScreen:
@@ -258,106 +302,6 @@ fillScreen:
     dey
     bne !---
     rts
-
-stabilize:
-    lda $d011
-    bpl stabilize
-stabilize2:
-    lda $d011
-    bmi stabilize2
-
-    ldx #47
-!:  
-    cpx $d012           // 4: 4
-    bne !-              // 2/3: 7
-
-    // execution timing by opcode: 
-    // https://codebase64.c64.org/doku.php?id=base:6510_instruction_timing&s[]=opcode
-    // the earliest time when the cpx has read the row number in the last of the 4 cycles.
-    // to compare the current raster line with the desired one the row number must be read in the last cycle of the cpx
-    // this means the shortest execution  looks like 
-    // last read cycles of cpx (1) + bne (no jump==2) = 3 cycles
-    // longest execution is when line changed after cpx:
-    // bne (3) + cpx (4) + bne (2) = 9
-    // this means the jitter is between 3 and 9
-    // the main idea of the following code is to use the knowledge of the current jitter and
-    // divide it by half with each further line
-
-    // so here we want now to add 63 - (9 - 3 + 1) / 2 cycles and check again then we would know
-    // we had 3-5 or 6-9 jitter
-    jsr cycles_43       // 6 + 43:  [52-58]
-    bit $ea             // 3:       [55-61]
-    nop                 // 2:       [57-63]
-    cpx $d012           // 4:       [61-67] 64,65,66,67=4cycles, when its not equal
-    beq skip1           // 2,3:  x=next line           61,62,63 when it's equal
-    // too early        // 2:       [63-69]             we could be in 63-65 now, jitter 1-3 cycles
-    nop                 // 2:       [ 2- 5]
-    nop                 // 2:       [ 4- 7]
-
-skip1:    
-    jsr cycles_43       // 49:      [53-56]
-    bit $ea             //  3:      [56-59]
-    nop                 //  2:      [58-61]
-    cpx $d012           //  4:      [62-65]
-    beq skip2           // 2,3
-    // too early        //  2:      [ 1- 2]
-    bit $ea             //  3:      [ 4- 5]
-
-
-skip2:    
-    jsr cycles_43       // 49:      [53-55]
-    nop                 //  2:      [55-57]
-    nop                 //  2:      [59-61]
-    nop                 //  2:      [61-63]
-    cpx $d012           //  4:      []
-    bne onecycle
-onecycle: 
-
-rts
-
-cycles_43:
-    ldy #$06            // 2:            2
-lp2:
-    dey                 // 2:6*2=12     14
-    bne lp2             // 3:5*3=15     29
-                        // 2:           31   
-    inx                 // 2:           33
-    nop                 // 2:           35
-    nop                 // 2:           37
-    rts                 // 6:           43
-
-
-
-//
-//
-//    // we multiplay this code 25 times, but we might be done earlier and need to
-//    // skip some of these fragments
-//
-//    ldy $d012           // n-1
-//    iny                 // n                 
-//    iny                 // n + 1
-//
-//    ldx #repetition
-//!:
-//    tya
-//    and #%11111000
-//    lda $d011
-//    lda #00             // 2: 02
-//    sta $d011           // 4: 06
-//    lda #00             // 2: 08
-//    dex                 // 2: 10
-//    bpl !-              // 2,3
-//    bne !+              // 3: 11
-//    cpy #$fa            // 2: 13
-//    bmi                 //
-//    jmp ende
-//!:  
-//
-//
-//
-//    ldx #repetition
-//
-//ende:
 
 .macro SaveIrqRegistersZPWithTimer (AccuZpLocation, XRegZpLocation, YRegZpLocation) {
     sta AccuZpLocation        // 2: 9 + jitter
@@ -396,13 +340,16 @@ lp2:
     sta $ffff
 }
 
-.macro irq_wait(rasterLine, AccuZpLocation, XRegZpLocation, YRegZpLocation) {
+.macro irq_wait(rasterLine, AccuZpLocation, XRegZpLocation, YRegZpLocation, alignment) {
     .errorif rasterLine > 255, "raster line number > 255, implement a irq_wait_ex instead"
     
     irqset: irq_set(next, rasterLine)
 
     irq_endRaster(AccuZpLocation, XRegZpLocation, YRegZpLocation)                             // restore reg values and return from irq
 
+    .if (alignment > 0) {
+        .align alignment
+    }
 next:
 }
 
@@ -418,3 +365,5 @@ next:
     ldx XRegZpLocation
     lda AccuZpLocation
 }
+
+#import "slackers.asm"
