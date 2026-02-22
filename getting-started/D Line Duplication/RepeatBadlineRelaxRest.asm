@@ -27,6 +27,10 @@
     .label IrqStretchYRegZpLocation = $04       
 
     .label StartStretchIrqRasterLine = 50
+    .label Sine1Length = 60
+    .label Sine2Length = 75
+    .label Sine1Amplitude = 5
+    .label Sine2Amplitude = 5
 }
 
 BasicUpstart2(main)
@@ -252,13 +256,11 @@ endStretchUpdate:
 .align $100
 .segment Default "sine table source"
 SineTable120:
-    .const sine1_length = 60
-    .fill sine1_length, 5 + (5 * sin(toRadians((i*360)/(sine1_length)))) 
+    .fill Configuration.Sine1Length, Configuration.Sine1Amplitude + (Configuration.Sine1Amplitude * sin(toRadians((i*360)/(Configuration.Sine1Length)))) 
 SineTable120End:
 
 SineTable95:
-    .const sine2_length = 75
-    .fill sine2_length, 5 + (5 * sin(toRadians((i*360)/(sine2_length)))) 
+    .fill Configuration.Sine2Length, Configuration.Sine2Amplitude + (Configuration.Sine2Amplitude * sin(toRadians((i*360)/(Configuration.Sine2Length)))) 
 SineTable95End:
 
 #if !USE_ROM_FONT
@@ -410,7 +412,7 @@ screen:
 	.byte	$7F, $EC, $A0, $A0, $A0, $A0, $A0, $A0, $A1, $69, $20, $A0, $A0, $CE, $69, $E9, $A0, $A0, $A0, $AE, $DA, $7F, $A0, $A0, $A0, $A0, $A0, $AE, $C8, $DA, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0
 	.byte	$DA, $A0, $A0, $A0, $A0, $A0, $A0, $AE, $69, $E9, $EF, $EF, $EF, $69, $E9, $A0, $A0, $A0, $A0, $A0, $AE, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A1, $FB, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0
 	.byte	$AE, $A0, $A0, $A0, $A0, $A0, $A0, $EC, $62, $62, $62, $62, $62, $62, $FB, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $AE, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0, $A0
-
+    
 *=$4000
 colors:
 	.byte	$05, $05, $05, $05, $05, $05, $03, $05, $05, $05, $05, $05, $05, $05, $05, $05, $05, $05, $05, $05, $05, $05, $05, $05, $03, $0E, $03, $05, $05, $05, $05, $05, $05, $05, $05, $05, $05, $05, $05, $05
