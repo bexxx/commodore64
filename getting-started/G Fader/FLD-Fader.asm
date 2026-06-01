@@ -6,11 +6,11 @@
 #import "../../includes/BezierEasings.asm"
 
 
-.filenamespace SimpleD011Stretcher
+.filenamespace FLDFader
 
 .namespace Configuration {
     .label RasterLineIrqSetup = $20             // start line for raster interrupt
-    .label RasterLineIrqDemo = $28
+
     .label Irq1AccuZpLocation = $02
     .label Irq1XRegZpLocation = $03
     .label Irq1YRegZpLocation = $04       
@@ -19,23 +19,48 @@
     .label IrqStretchXRegZpLocation = $03
     .label IrqStretchYRegZpLocation = $04       
 
-    .label StartStretchIrqRasterLine = 50+6 // 
+    .label StartStretchIrqRasterLine = 49
 }
 
-BasicUpstart2(main)
+//#define STANDALONE
 
+#if STANDALONE
+    BasicUpstart2(main)
+#endif 
+
+* = $2000
  main:
-     sei                                         // no other irqs during set
+    sei                                         // no other irqs during set
+
+    lda #0
+    //lda #%01011010
+    sta $3fff
 
     lda #$35                                    // disable kernel
     sta Zeropage.PORT_REG
-    
+
     lda #CIA1.CLEAR_ALL_INTERRUPT_SOURCES       // disable timer on CIAs mask
     sta CIA1.INTERRUPT_CONTROL_REG              // disable all CIA1 irqs
     sta CIA2.INTERRUPT_CONTROL_REG              // disable all CIA2 irqs
     lsr CIA1.INTERRUPT_CONTROL_REG              // ack timer
     lsr CIA2.INTERRUPT_CONTROL_REG              // ack timer
     
+typeLftLoader:
+    dec delay
+    ldx delay: #4
+    bpl wait
+    lda #4
+    sta delay
+    ldx charIndex: #0
+    lda loaderCredits,x
+    beq init
+    sta $0400 + 24*40,x
+    inc charIndex
+wait:
+    jsr busyWaitForNewScreen
+    jmp typeLftLoader
+
+init:
     lda #$81
     sta $d01a                                   // enable raster irq
 
@@ -55,12 +80,40 @@ BasicUpstart2(main)
     ldy #62                                     // let it count down from 62 like 62, ..., 2, 1, 62, 62, 61
     sty $dc04                                   // so it's always counting 63 cycles
 
+loaderCall:
+#if STANDALONE
+    //jsr fillScreen
+    //lsr VIC.INTERRUPT_EVENT                     // ack any pending irq
+#endif 
     cli
 
-    jsr fillScreen
-    //jsr copyLogo
-!:    jmp !-
+#if STANDALONE
+#else
+    jsr $0200 // spindle load next part on main
+#endif 
 
+mainLoop:  
+    ldx doneWithFader: #0
+    beq mainLoop
+
+#if STANDALONE
+!:  jmp !-
+#else
+    jmp $8800
+#endif 
+
+loaderCredits:
+    .text "loader by lft.   "
+    .byte 0
+
+busyWaitForNewScreen: {
+    lda $d011
+    bpl busyWaitForNewScreen        // 7th bit is MSB of rasterline, wait for the next frame
+!:  lda $d011
+    bmi !-                          // wait until the 7th bit is clear (=> line 0 of raster)
+
+    rts
+}
 
 .align $100                                     // align on the start of a new page
 .segment Default "raster interrupt"             // shows the bytes for this code, when using -showmem
@@ -116,95 +169,113 @@ fixcycle:
 
     rti
 
-.align $100                                     // align on the start of a new page
-.segment Default "stretcher code"               // shows the bytes for this code, when using -showmem
-
-.align $80
+.align $100
 irqStretcherStart: {
-row: 
     SaveIrqRegistersZPWithTimer(Configuration.IrqStretchAccuZpLocation, Configuration.IrqStretchXRegZpLocation, Configuration.IrqStretchYRegZpLocation)
     nop             // 2: 57
     nop
-.break
- beforeBadline:  
-        ldx stretch: #5 // 2: 59
-        beq !++         // 2: 61 / 3: 62
-        nop             // 2: 63
-!:      lda $d011       // 4: 4
-        clc             // 2: 6
-        adc #1          // 2: 8     make next line a badline
-        and #%00000111  // 2: 10     fix possible yscroll overflow
-        ora #%00010000  // 2: 12    fix other $d011 bits
-        sta $d011       // 4: 17    
-        dex             // 2: 19    keep badlines until stretch for this char line is done
-        beq !+          // 2: 21
-        bit $01
-        adc $1000,x     // 5
-        adc $1000,x     // 5
-        adc $1000,x     // 5
-        adc $1000,x     // 5
-        adc $1000,x     // 5
-        adc $1000,x     // 5
-        adc $1000,x     // 5
-        adc $1000,x     // 5
-        nop
-        bit $01
-        jmp !-          //  4: 63
-!:
-        lda $d011
-        bmi quit
-        lda $d012
-        cmp #247
-        bcc !+ 
-        jmp endFrame
-!:
-.break
-        lda $d012
-        clc
-        adc #8
-        cmp #250
-        bmi quit
-        sta $d012
+beforeBadline:  
+    ldx stretch: #0 // 2: 59
+    beq doneWithFLD         // 2: 61 / 3: 62
+    nop             // 2: 63
 
+doFLD: 
+    lda $d011       // 4: 4
+    bmi resetD011AndNextFrame   
+    clc             // 2: 6
+    adc #1          // 2: 8     make next line a badline
+    and #%00000111  // 2: 10    fix possible yscroll overflow
+    ora #%00011000  // 2: 12    fix other $d011 bits
+    sta $d011       // 4: 17
+    dex             // 2: 19    keep badlines until stretch for this char line is done
+    beq doneWithFLD // 2: 21
+    bit $01
+    adc $1000,x     // 5
+    adc $1000,x     // 5
+    adc $1000,x     // 5
+    adc $1000,x     // 5
+    adc $1000,x     // 5
+    adc $1000,x     // 5
+    adc $1000,x     // 5
+    adc $1000,x     // 5
+    //nop
+    bit $01
+    jmp doFLD       //  4: 63
 
-quit:        jmp endFrame
-!:
-        sta irqwait.irqset.rasterLine
-        irqwait: irq_wait(
-       $ff, 
-            Configuration.IrqStretchAccuZpLocation, 
-            Configuration.IrqStretchXRegZpLocation, 
-            Configuration.IrqStretchYRegZpLocation,
-            $80)
-    
+doneWithFLD:
+    lda $d011
+    bmi resetD011AndNextFrame
+    lda $d012
+    clc
+    adc #8
+    bcs nextFrame
+    cmp #251
+    bcs nextFrame
 
-endFrame:
+    tay
+    inc perRowSineIndex
+    ldx perRowSineIndex: #0
+    lda sineValues,x
+    sta irqStretcherStart.stretch
+    tya
 
+    jmp nextCharline
+
+nextFrame:
+    lda $d011
+    bpl nextFrame
+resetD011AndNextFrame:
+    lda #%00011011
+    sta $d011
+
+    inc sineFrameIndex
+    ldx sineFrameIndex: #0
+    beq doneWithFLDFading
+    stx perRowSineIndex
+    lda sineValues,x
+    sta irqStretcherStart.stretch
+
+    lda #Configuration.StartStretchIrqRasterLine
+nextCharline:
+    sta $d012
+endInterrupt:
     lsr VIC.INTERRUPT_EVENT                     // 6: 25 ack raster irq
-    
     ldy Configuration.Irq1YRegZpLocation
     ldx Configuration.Irq1XRegZpLocation
     lda Configuration.Irq1AccuZpLocation
 
     rti
-}
 
-// python3 .\sinusgen.py -type 16 -min 0 -max 23 -steps 255 -previewfile test.png -show
-//stretchValues:
-//    .import binary "output.bin"
+doneWithFLDFading:
+    lda #' '
+    ldx #0
+!:
+    sta $0400,x
+    sta $0500,x
+    sta $0600,x
+    sta $0700,x
+    dex
+    bne !-
+
+    inc doneWithFader
+
+    jmp endInterrupt
+}
 
 .align $100
 .segment Default "sine table source"
-stretchValues:
-SineTable120:
-    .fill 60, 9+ (9 * sin(toRadians((i*360)/(60)))) 
-SineTable120End:
+.function curve(x) {
+    //.return floor(cubicBezierEasing(x, 0, 40, Configuration.FppLines, 0.68, 0.09, 0.37, 0.37))
+    // https://cubic-bezier.com/#1,.02,.27,.42
+    //cubic-bezier(.53,.04,.49,.95)
+    //cubic-bezier(.9,0,.84,.74)
+    //.return floor(cubicBezierEasing(x, 0, 200, 256-25, 0.82,0.18,0.65,0.44))
+    .return floor(cubicBezierEasing(x, 0, 200, 256-25, 0.59,0.0,0.71,1.0))
+}
 
-SineTable95:
-    .fill 70, 9+ (9 * sin(toRadians((i*360)/(70)))) 
-SineTable95End:
-
-
+sineValues:
+    .fill 25, 0
+    .fill 256-25, curve(i)// + (10 + 10 * sin(toRadians(i*360/50)))
 
 fillScreen:
     ldy #25
