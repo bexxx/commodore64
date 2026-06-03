@@ -22,7 +22,7 @@
     .label StartStretchIrqRasterLine = 49
 }
 
-//#define STANDALONE
+#define STANDALONE
 
 #if STANDALONE
     BasicUpstart2(main)
@@ -176,7 +176,7 @@ irqStretcherStart: {
     nop
 beforeBadline:  
     ldx stretch: #0 // 2: 59
-    beq doneWithFLD         // 2: 61 / 3: 62
+    beq doneWithFLD // 2: 61 / 3: 62
     nop             // 2: 63
 
 doFLD: 
@@ -213,9 +213,9 @@ doneWithFLD:
     bcs nextFrame
 
     tay
-    inc perRowSineIndex
-    ldx perRowSineIndex: #0
-    lda sineValues,x
+    inc currentRow
+    ldx currentRow: #0
+    lda rowShiftValues,x
     sta irqStretcherStart.stretch
     tya
 
@@ -228,12 +228,14 @@ resetD011AndNextFrame:
     lda #%00011011
     sta $d011
 
-    inc sineFrameIndex
-    ldx sineFrameIndex: #0
-    beq doneWithFLDFading
-    stx perRowSineIndex
-    lda sineValues,x
+    jsr updateShiftTable
+
+    ldx #0
+    stx currentRow
+    lda rowShiftValues,x
     sta irqStretcherStart.stretch
+    
+    //beq doneWithFLDFading
 
     lda #Configuration.StartStretchIrqRasterLine
 nextCharline:
@@ -260,6 +262,30 @@ doneWithFLDFading:
     inc doneWithFader
 
     jmp endInterrupt
+
+updateShiftTable: {
+.break
+    ldx currentRow: #24
+updateRowsAfterInitial:
+    lda rowAccelerationIndexes,x
+    tax
+    lda sineValues,x
+    bpl !+
+    dec currentRow
+    dex
+    jmp updateRowsAfterInitial
+
+!:
+    clc
+    adc rowShiftValues,x
+    sta rowShiftValues,x
+
+    inx
+    cpx #25
+    bne updateRowsAfterInitial
+
+    rts
+}
 }
 
 .align $100
@@ -270,12 +296,31 @@ doneWithFLDFading:
     //cubic-bezier(.53,.04,.49,.95)
     //cubic-bezier(.9,0,.84,.74)
     //.return floor(cubicBezierEasing(x, 0, 200, 256-25, 0.82,0.18,0.65,0.44))
-    .return floor(cubicBezierEasing(x, 0, 200, 256-25, 0.59,0.0,0.71,1.0))
+    //.return floor(cubicBezierEasing(x, 0, 200, 256-25, 0.59,0.0,0.71,1.0))
+    
+    .return floor(cubicBezierEasing(x, 0, 200, 256, 0.91,0.29,0.84,0.52))
 }
 
 sineValues:
+    .fill 10, 9 * sin(toRadians(i*90/10))
+    .byte 9 * sin(toRadians(9*90/10)) | $80
+
+
+sineValues2:
     .fill 25, 0
-    .fill 256-25, curve(i)// + (10 + 10 * sin(toRadians(i*360/50)))
+    //.fill 256-25, curve(i)// + (10 + 10 * sin(toRadians(i*360/50)))
+    .fill 110, (9 + 9 * sin(toRadians((i)*360/110)+1.5*3.1415926535))
+    .fill 21, 0
+    .fill 110, (9 + 9 * sin(toRadians((i)*360/110)+1.5*3.1415926535))
+
+shiftValues:
+    .fill 256, curve(i)
+
+rowAccelerationIndexes:
+    .fill 24, 0
+    .byte 1 
+rowShiftValues:
+    .fill 25, 0
 
 fillScreen:
     ldy #25
