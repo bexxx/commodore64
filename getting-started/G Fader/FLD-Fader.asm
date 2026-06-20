@@ -172,12 +172,18 @@ fixcycle:
 .align $100
 irqStretcherStart: {
     SaveIrqRegistersZPWithTimer(Configuration.IrqStretchAccuZpLocation, Configuration.IrqStretchXRegZpLocation, Configuration.IrqStretchYRegZpLocation)
-    nop             // 2: 57
-    nop
+    //nop             // 2: 57
+    //nop
 beforeBadline:  
-    ldx stretch: #0 // 2: 59
+    ldx currentRow: #0      // 2
+    lda rowShiftValues,x    // 4
+    tax                     // 2
+
+    //ldx stretch: #0 // 2: 59
     beq doneWithFLD // 2: 61 / 3: 62
-    nop             // 2: 63
+    //nop             // 2: 63
+    bit $1
+    nop
 
 doFLD: 
     lda $d011       // 4: 4
@@ -207,18 +213,12 @@ doneWithFLD:
     bmi resetD011AndNextFrame
     lda $d012
     clc
-    adc #8
+    adc #7
     bcs nextFrame
-    cmp #251
+    cmp #248
     bcs nextFrame
 
-    tay
     inc currentRow
-    ldx currentRow: #0
-    lda rowShiftValues,x
-    sta irqStretcherStart.stretch
-    tya
-
     jmp nextCharline
 
 nextFrame:
@@ -232,8 +232,6 @@ resetD011AndNextFrame:
 
     ldx #0
     stx currentRow
-    lda rowShiftValues,x
-    sta irqStretcherStart.stretch
     
     //beq doneWithFLDFading
 
@@ -264,22 +262,65 @@ doneWithFLDFading:
     jmp endInterrupt
 
 updateShiftTable: {
-.break
+    ldx isEnabled: #1
+    bne !+
+    rts
+!:
+    dec delay
+    lda delay: #2
+    bmi !+
+    rts
+
+!:
+    lda #2
+    sta delay
+
     ldx currentRow: #24
+    bne updateRowsAfterInitial
+    lda #1
+    sta isOnTop
+
 updateRowsAfterInitial:
     lda rowAccelerationIndexes,x
-    tax
-    lda sineValues,x
-    bpl !+
+    tay
+    lda sineValues,y
+    bpl !++
     dec currentRow
-    dex
+    bpl !+
+    inc currentRow
+!:
+    dec rowAccelerationIndexes,x
     jmp updateRowsAfterInitial
 
 !:
+    inc rowAccelerationIndexes,x
     clc
     adc rowShiftValues,x
     sta rowShiftValues,x
 
+    ldy isOnTop: #0
+    beq !++
+    cmp #200
+    bcc !++
+    lda #0
+    sta isEnabled
+    lda #1
+    sta doneWithFader
+
+.break
+        lda #' '
+    ldx #0
+!:
+    sta $0400,x
+    sta $0500,x
+    sta $0600,x
+    sta $0700,x
+    dex
+    bne !-
+
+!:
+    lda #0
+    sta isOnTop
     inx
     cpx #25
     bne updateRowsAfterInitial
@@ -317,8 +358,8 @@ shiftValues:
     .fill 256, curve(i)
 
 rowAccelerationIndexes:
-    .fill 24, 0
-    .byte 1 
+    .fill 23, 0
+    .byte 1, 1
 rowShiftValues:
     .fill 25, 0
 
