@@ -215,12 +215,71 @@ endInterrupt:
 updateCharsets: {
     lda #YELLOW
     sta $d020
+    lda #<320
+    sta totalRemainingPixels
+    lda #>320
+    sta totalRemainingPixels+1
+    lda #<Configuration.Charset1Address
+    sta char1TargetLo
+    lda #>Configuration.Charset1Address
+    sta char1TargetHi
+    lda #<Configuration.Charset2Address
+    sta char2TargetLo
+    lda #>Configuration.Charset2Address
+    sta char2TargetHi
     lda size: #5
+    sta remainingWidth
+pixelLoop:
+    lda remainingWidth: #0
+    cmp #8
+    bcc lessThanEightPixel
+    lda patterns + 8
+    eor color: #$00
+.label char1TargetLo = * + 1
+.label char1TargetHi = * + 1
+    sta $dead 
+    eor #$ff
+.label char2TargetLo = * + 1
+.label char2TargetHi = * + 1
+    sta $dead 
 
+    clc
+    lda char1TargetLo
+    adc #8
+    sta char1TargetLo
+    sta char2TargetLo
+    bcc !+
+    inc char1TargetHi
+    inc char2TargetHi
+!:
+    lda remainingWidth
+    sec
+    sbc #8
+    sta remainingWidth
+    bcc pixelLoop
+    adc size
+    sta remainingWidth
 
+    lda totalRemainingPixels
+    sec
+    sbc size
+    lda totalRemainingPixels+1
+    sbc #0
+    sta totalRemainingPixels+1
+    bmi doneUpdating
 
-//    lda remainingWidth: 
-//remainingWidth = width
+    lda color
+    eor #$ff
+    sta color
+    jmp pixelLoop
+
+doneUpdating:
+    lda #BLACK
+    sta $d020
+totalRemainingPixels:
+    .byte 0, 0
+
+ 
 //targetIndex=0
 //char = 0
 //
@@ -248,22 +307,24 @@ updateCharsets: {
 //
 //    remainingWidth = width - remainingWidth
 
+lessThanEightPixel:
+
 //end:
 //
 //color:
 //    .byte 0
 //
 //
-//patterns = [
-//    .byte %00000000
-//    .byte %10000000
-//    .byte %11000000
-//    .byte %11100000
-//    .byte %11110000
-//    .byte %11111000
-//    .byte %11111100
-//    .byte %11111110
-//    .byte %11111111]
+patterns:
+    .byte %00000000
+    .byte %10000000
+    .byte %11000000
+    .byte %11100000
+    .byte %11110000
+    .byte %11111000
+    .byte %11111100
+    .byte %11111110
+    .byte %11111111
 
 
 
