@@ -4,8 +4,6 @@
 #import "../../includes/internals.inc"
 #import "../../includes/zeropage.inc"
 #import "../../includes/BezierEasings.asm"
-#import "../../includes/irq_helpers.asm"
-
 
 .filenamespace ChessZoomerIrqs
 
@@ -26,7 +24,6 @@ BasicUpstart2(main)
 
     .label Charset1Address = $3000
     .label Charset2Address = $3800
-    .label ScratchBufferAddress = $2d00
     .label Screen = $0400
     .label SineValuesAddress = $2e00
 }
@@ -220,16 +217,6 @@ endInterrupt:
     rti
 }
 
-
-.align $100
-irqStartUpdateCharset: {
-    irq_save()
-
-
-endInterrupt:
-    @irqhelpers.irq_endRaster()
-}
-
 updateCharsets: {
     lda #YELLOW
     sta $d020
@@ -241,91 +228,105 @@ updateCharsets: {
     sta currentWidth+1
 
     // reset charset pointer for both normal and inverted charset
-    lda #<TempCharset1
-    sta Charset1AdressLo1
-    sta Charset1AdressLo2
-    lda #<TempCharset2
-    sta Charset2AdressLo1
-    sta Charset2AdressLo2
-    lda #>TempCharset1
-    sta Charset1AdressHi1
-    sta Charset1AdressHi2
-    lda #>TempCharset2
-    sta Charset2AdressHi1
-    sta Charset2AdressHi2
+    lda #<Configuration.Charset1Address
+    sta char1TargetLo
+    sta char2TargetLo
+    lda #>Configuration.Charset1Address
+    sta char1TargetHi
+    lda #>Configuration.Charset2Address
+    sta char2TargetHi
 
     // initialize remainging counters
-    
-    ldy #0
-    sty remainingPixels
-pixelLoop:
-    sec
     lda currentWidth
-    sbc remainingPixels
     sta remainingWidth
     lda currentWidth+1
+    sta remainingWidth+1
+    
+    ldy #40-1                 // 40 characters per line
+pixelLoop:
+    
+    // decrement remaining with by 8 (8 pixels per character)
+.break
+    sec
+    lda remainingWidth
+    sbc #8
+    sta remainingWidth
+    lda remainingWidth+1
     sbc #0
     sta remainingWidth+1
+    bpl moreRemainingPixelsLeft     // more pixels in the same color
 
-    // get the remaining pixels after drawing full characters
+    // remaining width is a negative number. but it must be -1 to -7, because we subtracted 8
+    // so clear bit 7 to make this a number 1 - 7 to use it as an index into the patterns array
     lda remainingWidth
     and #%00000111
-    sta remainingPixels
+    tax         
 
-    // divide 16 bit number / 8 to get the number of full characters to draw
-    lsr remainingWidth+1 // max is 320, so only 1 bit in hi byte, so we can just shift it out
-    ror remainingWidth      // possibly take the hi bytes bit
-    lsr remainingWidth      // from here it's just shift right
-    lsr remainingWidth      // one more for div by 8
+    // remaining width was negative, so we are adding the current width number
+    // to get the remaining with after drawing the partial pixels in the current character
+    // carry is clear because we are negative.
+    
+    lda currentWidth
+    adc remainingWidth
+    sta remainingWidth
+    lda currentWidth+1
+    adc remainingWidth+1
+    sta remainingWidth+1
 
-    lda remainingWidth
-    beq drawRemainingPixels
+    inc updateColor
 
+    // depending on the current color, we either store the pattern or the inverted
+    // pattern into the charset    
+    lda patterns,x
+    ldx color
+    bne !+       // inverted condition, we inverted color before
+    eor #$ff
 !:
-    tax                     // number of full chars to draw
+    
+    jmp store8PxInCharset
+
 moreRemainingPixelsLeft:
     lda color
 store8PxInCharset:
-.label Charset1AdressLo1 = * + 1
-.label Charset1AdressHi1 = * + 2
-    sta $dead,y 
+.label char1TargetLo = * + 1
+.label char1TargetHi = * + 2
+    sta $dead 
     eor #$ff
-.label Charset2AdressLo1 = * + 1
-.label Charset2AdressHi1 = * + 2
-    sta $dead,y
-    iny
-    cpy #40
-    beq doneUpdating
-    dex
-    bne moreRemainingPixelsLeft 
+.label char2TargetLo = * + 1
+.label char2TargetHi = * + 2
+    sta $dead 
 
-drawRemainingPixels:
-
-    lda color
+    clc
+    lda char1TargetLo
+    adc #8
+    sta char1TargetLo
+    sta char2TargetLo
+    bcc !+
+    inc char1TargetHi
+    inc char2TargetHi
+!:
+    lda updateColor: #0
+    bne doUpdateColor   
+    lda remainingWidth+1
     bne !+
-    eor #$ff
-!:    
-    ldx remainingPixels: #0
-    beq noRemainingPixels
-    eor patterns,x
-storeRemainingPxInCharset:
-.label Charset1AdressLo2 = * + 1
-.label Charset1AdressHi2 = * + 2
-    sta $dead,y 
-    eor #$ff
-.label Charset2AdressLo2 = * + 1
-.label Charset2AdressHi2 = * + 2
-    sta $dead,y 
+    lda remainingWidth 
+    bne !+
 
-    iny
-    cpy #40
-    beq doneUpdating
+    lda currentWidth
+    sta remainingWidth
+    lda currentWidth+1
+    sta remainingWidth+1
 
-noRemainingPixels:
+doUpdateColor:
     lda color
     eor #$ff
     sta color
-    
+    lda #0
+    sta updateColor 
+
+!:
+    dey
+    bmi doneUpdating
     jmp pixelLoop
 
 doneUpdating:
@@ -345,54 +346,86 @@ color:
 cloneCharsetBytes: {
     lda #GREEN
     sta $d020
-    ldx #(20)*8
-    ldy #20-1
+    ldx #$0
 !:
-    lda TempCharset1,y
-    sta Configuration.Charset1Address - 8 + 0,x
-    sta Configuration.Charset1Address - 8 + 1,x
-    sta Configuration.Charset1Address - 8 + 2,x
-    sta Configuration.Charset1Address - 8 + 3,x
-    sta Configuration.Charset1Address - 8 + 4,x
-    sta Configuration.Charset1Address - 8 + 5,x
-    sta Configuration.Charset1Address - 8 + 6,x
-    sta Configuration.Charset1Address - 8 + 7,x
+    lda Configuration.Charset1Address,x
+    inx
+    sta Configuration.Charset1Address,x
+    inx
+    sta Configuration.Charset1Address,x
+    inx
+    sta Configuration.Charset1Address,x
+    inx
+    sta Configuration.Charset1Address,x
+    inx
+    sta Configuration.Charset1Address,x
+    inx
+    sta Configuration.Charset1Address,x
+    inx
+    sta Configuration.Charset1Address,x
+    inx
+    bne !-
 
-    lda TempCharset1+20,y
-    sta Configuration.Charset1Address - 8 + 20*8 + 0,x
-    sta Configuration.Charset1Address - 8 + 20*8 + 1,x
-    sta Configuration.Charset1Address - 8 + 20*8 + 2,x
-    sta Configuration.Charset1Address - 8 + 20*8 + 3,x
-    sta Configuration.Charset1Address - 8 + 20*8 + 4,x
-    sta Configuration.Charset1Address - 8 + 20*8 + 5,x
-    sta Configuration.Charset1Address - 8 + 20*8 + 6,x
-    sta Configuration.Charset1Address - 8 + 20*8 + 7,x
+    ldx #$0
+!:
+    lda Configuration.Charset1Address + 32 * 8,x
+    inx
+    sta Configuration.Charset1Address + 32 * 8,x
+    inx
+    sta Configuration.Charset1Address + 32 * 8,x
+    inx
+    sta Configuration.Charset1Address + 32 * 8,x
+    inx
+    sta Configuration.Charset1Address + 32 * 8,x
+    inx
+    sta Configuration.Charset1Address + 32 * 8,x
+    inx
+    sta Configuration.Charset1Address + 32 * 8,x
+    inx
+    sta Configuration.Charset1Address + 32 * 8,x
+    inx
+    cpx #8*8
+    bne !-
 
-    lda TempCharset2,y
-    sta Configuration.Charset2Address - 8 + 0,x
-    sta Configuration.Charset2Address - 8 + 1,x
-    sta Configuration.Charset2Address - 8 + 2,x
-    sta Configuration.Charset2Address - 8 + 3,x
-    sta Configuration.Charset2Address - 8 + 4,x
-    sta Configuration.Charset2Address - 8 + 5,x
-    sta Configuration.Charset2Address - 8 + 6,x
-    sta Configuration.Charset2Address - 8 + 7,x    
+    ldx #$0
+!:
+    lda Configuration.Charset2Address,x
+    inx
+    sta Configuration.Charset2Address,x
+    inx
+    sta Configuration.Charset2Address,x
+    inx
+    sta Configuration.Charset2Address,x
+    inx
+    sta Configuration.Charset2Address,x
+    inx
+    sta Configuration.Charset2Address,x
+    inx
+    sta Configuration.Charset2Address,x
+    inx
+    sta Configuration.Charset2Address,x
+    inx
+    bne !-
 
-    lda TempCharset2+20,y
-    dey
-    sta Configuration.Charset2Address - 8 + 20*8 + 0,x
-    sta Configuration.Charset2Address - 8 + 20*8 + 1,x
-    sta Configuration.Charset2Address - 8 + 20*8 + 2,x
-    sta Configuration.Charset2Address - 8 + 20*8 + 3,x
-    sta Configuration.Charset2Address - 8 + 20*8 + 4,x
-    sta Configuration.Charset2Address - 8 + 20*8 + 5,x
-    sta Configuration.Charset2Address - 8 + 20*8 + 6,x
-    sta Configuration.Charset2Address - 8 + 20*8 + 7,x    
-
-    txa
-    sec
-    sbc #8
-    tax
+    ldx #$0
+!:
+    lda Configuration.Charset2Address + 32 * 8,x
+    inx
+    sta Configuration.Charset2Address + 32 * 8,x
+    inx
+    sta Configuration.Charset2Address + 32 * 8,x
+    inx
+    sta Configuration.Charset2Address + 32 * 8,x
+    inx
+    sta Configuration.Charset2Address + 32 * 8,x
+    inx
+    sta Configuration.Charset2Address + 32 * 8,x
+    inx
+    sta Configuration.Charset2Address + 32 * 8,x
+    inx
+    sta Configuration.Charset2Address + 32 * 8,x
+    inx
+    cpx #8*8
     bne !-
 
     lda #BLACK
@@ -473,22 +506,16 @@ next:
     ldx XRegZpLocation
     lda AccuZpLocation
 }
-   
+
 * = Configuration.SineValuesAddress "Sine values"
 SineValues:
     .fill $100, 4 + sin(toRadians((i / $100) * 180)) * (180 - 4)
 
-* = Configuration.ScratchBufferAddress  "SCRATCH" virtual
-TempCharset1:
-    .fill 40, 0
-TempCharset2:
-    .fill 40, 0
-
 * = Configuration.Charset1Address  "Charset 1" virtual
-    .fill 256*8, 0
+    .fill 40*8, 0
 
 * = Configuration.Charset2Address "Charset 2" virtual
-    .fill 256*8, 0
+    .fill 40*8, 0
 
 
 
