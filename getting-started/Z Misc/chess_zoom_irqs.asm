@@ -6,6 +6,7 @@
 #import "../../includes/BezierEasings.asm"
 #import "../../includes/irq_helpers.asm"
 
+#define TIMING
 
 .filenamespace ChessZoomerIrqs
 
@@ -22,7 +23,8 @@ BasicUpstart2(main)
     .label IrqStretchXRegZpLocation = $03
     .label IrqStretchYRegZpLocation = $04       
 
-    .label StartStretchIrqRasterLine = 49
+    .label StartUpdateCharsetIrqRasterLine = 30
+    .label StartZoomerIrqRasterLine = 49 - 1
 
     .label Charset1Address = $3000
     .label Charset2Address = $3800
@@ -33,10 +35,6 @@ BasicUpstart2(main)
 
 main:
     sei                                         // no other irqs during set
-
-    lda #0
-    //lda #%01011010
-    sta $3fff
 
     lda #$35                                    // disable kernel
     sta $01
@@ -67,19 +65,12 @@ init:
     ldy #62                                     // let it count down from 62 like 62, ..., 2, 1, 62, 62, 61
     sty $dc04                                   // so it's always counting 63 cycles
 
-
-    // generate charsets
-    ldx #39
-    lda #$0
-!:  sta Configuration.Charset1Address,x
-    dex
-    bpl !-
-
-    ldx #39
-    lda #$ff
-!:  sta Configuration.Charset2Address,x
-    dex
-    bpl !-
+    ldx #0
+    lda SineValues,x
+    sta irqStartUpdateCharset.currentWidth
+    stx irqStartUpdateCharset.currentWidth+1
+    jsr irqStartUpdateCharset.updateCharsets
+    jsr irqStartCloneCharset.cloneCharsetBytes
 
     clc
     ldx #0
@@ -138,11 +129,11 @@ fixcycle:
     ldy #$11                                    // configure CIA to continuous restart timer counter
     sty $dc0e  
 
-    lda #Configuration.StartStretchIrqRasterLine        
+    lda #Configuration.StartUpdateCharsetIrqRasterLine
     sta VIC.CURRENT_RASTERLINE_REG              
-    lda #<irqZoomerStart
+    lda #<irqStartUpdateCharset
     sta Internals.InterruptHandlerPointerRomLo
-    lda #>irqZoomerStart
+    lda #>irqStartUpdateCharset
     sta Internals.InterruptHandlerPointerRomHi
     
     txs                                         // get stack pointer from first irq back
@@ -157,13 +148,49 @@ fixcycle:
 .align $100
 irqZoomerStart: {
     SaveIrqRegistersZPWithTimer(Configuration.IrqStretchAccuZpLocation, Configuration.IrqStretchXRegZpLocation, Configuration.IrqStretchYRegZpLocation)
-    nop             // 2: 57
-    nop
-beforeBadline:  
-    lda d018Value: #0
-    sta $d018
+    
+    // waste one rasterline
+    .fill 10, NOP
 
-    //inc $d020
+    ldy $d012                   // 4:  6
+    dey                         // 2:  8
+    dey                         // 2: 10
+    tya                         // 2: 12
+    ldx sineIndex: #0           // 2:  2
+    adc SineValues,x            // 4: 16
+    bcs doneWithScreen          // 2: 18
+    tax                         // 2: 20
+    and #%00000111              // 2: 22
+    cmp #3                      // 2: 24
+    bne !+                      // 2: 26
+    dex                         // 2: 28
+    inc isbadline               // 4: 32
+    jmp !++                     // 3: 35
+!:
+    txa                         // 1+2: 29
+    sta $d012
+    nop                         // 2: 31
+    nop                         // 2: 33 
+    nop                         // 2: 35
+!:  bit $01                     // 3: 38
+
+    lda isbadline: #0
+    beq !+
+    // waste
+    bit $01
+    bit $01
+    .fill 7, NOP
+    
+!:    
+    lda d018Value: #0   // @$38/56
+    sta $d018           // @58
+                        // 62    
+#if TIMING
+    lda $d020
+    pha
+    lda #RED
+    sta $d020//inc $d020
+#endif
 
     lda $d011
     bmi doneWithScreen
@@ -172,46 +199,35 @@ beforeBadline:
     eor #((Configuration.Charset1Address & $3800)/$800*2)^((Configuration.Charset2Address&$3800)/$800*2)
     sta d018Value
 
-    ldx sineIndex: #0
-    lda $d012
-    clc
-    adc SineValues,x
-    bcs doneWithScreen
-
-
-    jmp nextCharline
+    lda #0
+    sta isbadline
+   
+    jmp endInterrupt
 
 doneWithScreen:
-    lda #BLACK
-    sta $d020
 
     inc sineIndex
     ldx sineIndex
     lda SineValues,x
-    sta updateCharsets.currentWidth
+    sta irqStartUpdateCharset.currentWidth
     lda #0
-    sta updateCharsets.currentWidth+1
+    sta irqStartUpdateCharset.currentWidth+1
 
-    irq_wait($ff, Configuration.IrqStretchAccuZpLocation, Configuration.IrqStretchXRegZpLocation, Configuration.IrqStretchYRegZpLocation, 0)
-.break
-    jsr updateCharsets
-.break
-    jsr cloneCharsetBytes
-.break
+    irq_set(irqStartCloneCharset, $105)
+    
     lda #(Configuration.Screen & $3c00)/$400*$10 + (Configuration.Charset1Address & $3800)/$800*2
     sta irqZoomerStart.d018Value
+    jmp endInterrupt
 
-    lda #<irqZoomerStart
-    sta $fffe
-    lda #>irqZoomerStart
-    sta $ffff
-
-    lda #Configuration.StartStretchIrqRasterLine
 nextCharline:
     sta $d012
 endInterrupt:
-    lsr VIC.INTERRUPT_EVENT                     // 6: 25 ack raster irq
+    lsr VIC.INTERRUPT_EVENT                     
 
+#if TIMING
+    pla
+    sta $d020
+#endif
 
     ldy Configuration.Irq1YRegZpLocation
     ldx Configuration.Irq1XRegZpLocation
@@ -225,20 +241,42 @@ endInterrupt:
 irqStartUpdateCharset: {
     irq_save()
 
+#if TIMING
+    lda $d020
+    pha
 
-endInterrupt:
-    @irqhelpers.irq_endRaster()
-}
-
-updateCharsets: {
     lda #YELLOW
     sta $d020
+#endif
+
+    lsr $d019
+
+    lda #Configuration.StartZoomerIrqRasterLine        
+    sta VIC.CURRENT_RASTERLINE_REG              
+    lda #<irqZoomerStart
+    sta Internals.InterruptHandlerPointerRomLo
+    lda #>irqZoomerStart
+    sta Internals.InterruptHandlerPointerRomHi
+
+    // allow other raster irqs to interrupt this one
+    cli
+
+    jsr updateCharsets
+
+endInterrupt:
+#if TIMING
+    pla
+    sta $d020
+#endif
+    @irq_endRaster()
+
+updateCharsets: 
 
     // temp for debugging, remove later
-    lda #12
-    sta currentWidth
-    lda #0
-    sta currentWidth+1
+    //lda #12
+    //sta currentWidth
+    //lda #0
+    //sta currentWidth+1
 
     // reset charset pointer for both normal and inverted charset
     lda #<TempCharset1
@@ -254,8 +292,15 @@ updateCharsets: {
     sta Charset2AdressHi1
     sta Charset2AdressHi2
 
+    // may change with x,y offset
+    lda #0
+    sta color
+
     // initialize remainging counters
     
+    //lda #$10
+    //sta currentWidth
+
     ldy #0
     sty remainingPixels
 pixelLoop:
@@ -269,6 +314,8 @@ pixelLoop:
 
     // get the remaining pixels after drawing full characters
     lda remainingWidth
+    bne !+
+!:
     and #%00000111
     sta remainingPixels
 
@@ -298,16 +345,15 @@ store8PxInCharset:
     beq doneUpdating
     dex
     bne moreRemainingPixelsLeft 
+    jmp drawRemainingPixels
 
 drawRemainingPixels:
-
-    lda color
-    bne !+
-    eor #$ff
-!:    
     ldx remainingPixels: #0
     beq noRemainingPixels
-    eor patterns,x
+    lda patterns,x
+    ldx color
+    bne storeRemainingPxInCharset
+    eor #$ff
 storeRemainingPxInCharset:
 .label Charset1AdressLo2 = * + 1
 .label Charset1AdressHi2 = * + 2
@@ -321,17 +367,34 @@ storeRemainingPxInCharset:
     cpy #40
     beq doneUpdating
 
+    sec
+    lda #8
+    sbc remainingPixels
+    sta remainingPixels
+
 noRemainingPixels:
     lda color
     eor #$ff
     sta color
-    
+ 
     jmp pixelLoop
 
 doneUpdating:
-    lda #BLACK
-    sta $d020
+    //lda #BLACK
+    //sta $d020
     rts
+
+patterns:
+    .byte %00000000   // 0
+    .byte %10000000   // 1
+    .byte %11000000   // 2
+    .byte %11100000   // 3
+    .byte %11110000   // 4   
+    .byte %11111000   // 5
+    .byte %11111100   // 6
+    .byte %11111110   // 7
+    .byte %11111111   // 8
+
 totalRemainingPixels:
     .byte 0, 0
 currentWidth:
@@ -342,9 +405,31 @@ color:
     .byte 0
 }
 
-cloneCharsetBytes: {
+.align $100
+irqStartCloneCharset: {
+    irq_save()
+
+#if TIMING
+    lda $d020
+    pha 
+
     lda #GREEN
     sta $d020
+#endif
+    jsr cloneCharsetBytes
+    
+endInterrupt:
+#if TIMING
+    pla
+    sta $d020
+#endif
+
+    irq_set(irqStartUpdateCharset, Configuration.StartUpdateCharsetIrqRasterLine)
+    
+    @irq_endRaster()
+
+cloneCharsetBytes: {
+
     ldx #(20)*8
     ldy #20-1
 !:
@@ -395,21 +480,10 @@ cloneCharsetBytes: {
     tax
     bne !-
 
-    lda #BLACK
-    sta $d020
     rts
 }
 
-patterns:
-    .byte %00000000   // 0
-    .byte %10000000   // 1
-    .byte %11000000   // 2
-    .byte %11100000   // 3
-    .byte %11110000   // 4   
-    .byte %11111000   // 5
-    .byte %11111100   // 6
-    .byte %11111110   // 7
-    .byte %11111111   // 8
+}
 
 .macro SaveIrqRegistersZPWithTimer (AccuZpLocation, XRegZpLocation, YRegZpLocation) {
     sta AccuZpLocation        // 2: 9 + jitter
@@ -419,7 +493,7 @@ patterns:
 
     and #%00001111            // 2: 21 mask timer value
     sta delay                 // 4: 25
-    lda #9                    // 2: 27
+    lda #12                   // 2: 27
     sec                       // 2: 29
     sbc delay: #1             // 2: 33
     
@@ -430,13 +504,24 @@ patterns:
     lda     #$a9        
     lda     #$a9        
     lda     #$a9        
+    lda     #$a9        
+    lda     #$a9        
+    lda     #$a9        
     lda     #$a9       
     lda     $eaa5
     // stable at cycle 53 on the same raster line
 }
 
 .macro irq_set(label, rasterline) {
-    lda rasterLine: #rasterline
+    lda $d011
+    .if (rasterline > 255) {
+        ora #%10000000
+    } else {
+        and #%01111111
+    }
+    sta $d011
+    
+    lda rasterLine: #<rasterline
     sta $d012
     irq_set_no_line(label)
 }
@@ -476,7 +561,7 @@ next:
    
 * = Configuration.SineValuesAddress "Sine values"
 SineValues:
-    .fill $100, 4 + sin(toRadians((i / $100) * 180)) * (180 - 4)
+    .fill $100, 6 + sin(toRadians((i / $100) * 180)) * (180 - 6)
 
 * = Configuration.ScratchBufferAddress  "SCRATCH" virtual
 TempCharset1:
@@ -490,14 +575,10 @@ TempCharset2:
 * = Configuration.Charset2Address "Charset 2" virtual
     .fill 256*8, 0
 
-
-
-
 //  01010101                    40x
 //  00110011                    40x
 //  00011100 01110001 11000111  34x
 //  00001111                    40x
-
 
 //  
 //  >= 4px means only one change per character
@@ -507,49 +588,3 @@ TempCharset2:
 //  00000000 11111111
 //  00000000 01111111 11000000 00011111 1111
 //  ...
-
-
-//color == 00 or ff
-//remainingWidth = width
-//targetIndex=0
-//char = 0
-//
-//while remainingWidth > 8 {
-//    lda patterns[8-1]
-//    eor color
-//    sta charsetHi: charset + targetIndex
-//    targetIndex += 8
-//    bcc !+
-//    inc charsetHi
-//!:
-//    remainingWidth -= 8
-//    char++
-//    if char > 39
-//        jmp end
-//}
-//    color = color eor $ff
-//
-//    if remainingWidth > 0 {
-//        lda pattern[remainingWidth]
-//        sta charset + targetIndex
-//    }
-//
-//    targetIndex += 8
-//
-//    remainingWidth = width - remainingWidth
-//
-//end:
-//
-//
-//
-//
-//patterns = [
-//    .byte %00000000
-//    .byte %10000000
-//    .byte %11000000
-//    .byte %11100000
-//    .byte %11110000
-//    .byte %11111000
-//    .byte %11111100
-//    .byte %11111110
-//    .byte %11111111]

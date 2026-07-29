@@ -33,6 +33,13 @@ waitForRasterChange:
     beq waitForRasterChange
 }
 
+.macro BusyWaitForRasterLine(rasterLine) {
+waitForRasterChange:
+    lda VIC.CURRENT_RASTERLINE_REG              // load current raster line
+    cmp #rasterLine
+    bne waitForRasterChange
+}
+
 .macro IncreaseYScrollBy(pixels) {
     clc                                         
     lda VIC.SCREEN_CONTROL_REG                  // load current reg values with YSCROLL

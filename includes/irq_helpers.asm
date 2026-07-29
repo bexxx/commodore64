@@ -2,7 +2,7 @@
 
 .macro irq_set(label, rasterline) {
     irq_set_no_line(label)
-    lda #rasterline
+    lda rasterLine: #rasterline
     sta $d012
 }
 
